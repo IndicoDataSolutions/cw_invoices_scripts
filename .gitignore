@@ -1,3 +1,4 @@
 *.pyc
+.profile
 cw_invoice_env/
 .vscode/

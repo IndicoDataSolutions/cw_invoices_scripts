@@ -11,3 +11,9 @@ handled in the future
 
 Query for COMPLETE submissions from the invoice model workflow and generate a
 csv export for further downstream CW processes
+
+## Configuration
+
+Please set the following environment variable:
+
+`INDICO_API_TOKEN`: the contents of an indico_api_token.txt from 
