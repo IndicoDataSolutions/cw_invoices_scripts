@@ -1,0 +1,3 @@
+*.pyc
+cw_invoice_env/
+.vscode/
