@@ -11,6 +11,8 @@ INDICO_CLIENT = IndicoClient(config=my_config)
 # NOTE, please configure this to the appropriate ID
 WORKFLOW_ID = 13
 
+# NOTE, please configure this to the appropriate model name
+MODEL_NAME = 'Invoice Extraction Model 2.0 q8 model'
 
 # Field types
 # There should only be one value for each key field

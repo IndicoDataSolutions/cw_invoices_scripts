@@ -9,12 +9,14 @@ from indico.queries import (
     SubmissionResult,
     UpdateSubmission,
     GraphQLRequest,
+    GetSubmission
 )
 
-from config import KEY_FIELDS, ROW_FIELDS, INDICO_CLIENT, WORKFLOW_ID
+from config import KEY_FIELDS, ROW_FIELDS, INDICO_CLIENT, WORKFLOW_ID, MODEL_NAME
+import ipdb
 
 
-def get_page_extractions(submission_id, model_name, post_review=True):
+def get_page_extractions(submission, model_name, post_review=True):
     """
     Return predictions and page info for a submission
 
@@ -26,7 +28,7 @@ def get_page_extractions(submission_id, model_name, post_review=True):
     else:
         result_type = "pre_review"
 
-    sub_job = INDICO_CLIENT.call(SubmissionResult(submission_id.id, wait=True))
+    sub_job = INDICO_CLIENT.call(SubmissionResult(submission.id, wait=True))
     results = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
 
     # get page info
@@ -41,7 +43,6 @@ def get_page_extractions(submission_id, model_name, post_review=True):
 
     # get predictions
     predictions = results["results"]["document"]["results"][model_name][result_type]
-
     return page_infos, predictions
 
 
@@ -192,7 +193,7 @@ def aligned_rows_to_df(aligned_rows):
 
 def get_submissions(client, workflow_id, status, retrieved):
     qstr = f"""{{
-        submissions(workflowIds: {workflow_id}, filters: {{status: {status}}}){{
+        submissions( filters: {{status: {status}}}){{
             submissions{{
             id
             inputFile
@@ -203,15 +204,16 @@ def get_submissions(client, workflow_id, status, retrieved):
             }}
         }}
     }}"""
-
-    subs = client.call(GraphQLRequest(query=qstr))["submissions"]
-    if retrieved:
-        subs = [s for s in sub if not s["retrieved"]]
+    subs = client.call(GraphQLRequest(query=qstr))["submissions"]["submissions"]
+    subs = [s for s in subs if s["workflowId"] == workflow_id and s["status"] == status]
+    # TODO: make this make more sense
+    if not retrieved:
+        subs = [s for s in subs if not s["retrieved"]]
     return subs
 
 
 def mark_retreived(client, submission_id):
-    client.call(UpdateSubmission(submission_id, retrieved=True))
+    client.call(UpdateSubmission(submission.id, retrieved=True))
 
 
 if __name__ == "__main__":
@@ -225,21 +227,22 @@ if __name__ == "__main__":
     model_name = "GOS Invoice Extraction Model q19 model"
     full_dfs = []
     for sub in complete_submissions:
+        submission = INDICO_CLIENT.call(GetSubmission(sub["id"]))
         page_infos, predictions = get_page_extractions(
-            sub['id'], model_name, post_review=True
+            submission, MODEL_NAME, post_review=True
         )
         tokens = merge_page_tokens(page_infos)
 
         key_predictions = filter_preds(predictions, KEY_FIELDS)
         row_predictions = filter_preds(predictions, ROW_FIELDS)
 
-        line_item_df = align_rows(row_predictions, tokens, sub.input_filename)
-        key_preds_vert_df = predictions_to_df([sub], [key_predictions])
+        line_item_df = align_rows(row_predictions, tokens, submission.input_filename)
+        key_preds_vert_df = predictions_to_df([submission], [key_predictions])
         top_conf_key_pred_df = get_top_pred_df(key_preds_vert_df)
         key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
         full_df = key_pred_df.merge(line_item_df, on=["filename"])
         full_dfs.append(full_df)
-        mark_retreived(INDICO_CLIENT, sub['id'])
+        mark_retreived(INDICO_CLIENT, submission)
 
     output_df = pd.concat(full_dfs)
 
