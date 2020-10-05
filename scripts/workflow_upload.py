@@ -4,12 +4,10 @@ workflow.  Note that this script is where we would want to place logic for
 STP.
 """
 
-import os
-import glob
 from indico.queries import WorkflowSubmission
 
-from scripts.utils import files_from_directory, move_file
-from scripts.config import WORKFLOW_ID, INDICO_CLIENT
+from utils import files_from_directory, move_file
+from config import WORKFLOW_ID, INDICO_CLIENT
 
 
 # TODO: Change this to the appropriate shared drive
@@ -33,7 +31,7 @@ def upload_to_workflow(pdf_filepaths, client, workflow_id, batch_size=10):
 
 if __name__ == "__main__":
     pdf_filepaths = files_from_directory(INVOICE_INPUT_DIR, "*.pdf")
-    submision_ids = upload_to_workflow(INVOICE_INPUT_DIR, INDICO_CLIENT, WORKFLOW_ID)
+    submision_ids = upload_to_workflow(pdf_filepaths, INDICO_CLIENT, WORKFLOW_ID)
 
     # move pdfs to completed folder
     for pdf_filepath in pdf_filepaths:

@@ -3,7 +3,7 @@ from indico import IndicoClient, IndicoConfig
 
 
 HOST = os.getenv("INDICO_API_HOST", "cush.indico.domains")
-API_TOKEN = os.getenv("INDICO_API_TOKEN")
+API_TOKEN = os.getenv("CW_INDICO_API_TOKEN")
 
 my_config = IndicoConfig(host=HOST, api_token=API_TOKEN)
 INDICO_CLIENT = IndicoClient(config=my_config)
