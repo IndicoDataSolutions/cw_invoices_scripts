@@ -2,6 +2,7 @@
 This script handles pulling COMPLETE documents from a workflow and transforming
 the results into a csv format for further downstream processing.
 """
+import os
 import pandas as pd
 from collections import defaultdict
 from indico.queries import (
@@ -9,12 +10,13 @@ from indico.queries import (
     SubmissionResult,
     UpdateSubmission,
     GraphQLRequest,
-    GetSubmission
+    GetSubmission,
 )
 
 from config import KEY_FIELDS, ROW_FIELDS, INDICO_CLIENT, WORKFLOW_ID, MODEL_NAME
-import ipdb
 
+
+EXPORT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/invoices/uploaded"
 
 def get_page_extractions(submission, model_name, post_review=True):
     """
@@ -213,7 +215,7 @@ def get_submissions(client, workflow_id, status, retrieved):
 
 
 def mark_retreived(client, submission_id):
-    client.call(UpdateSubmission(submission.id, retrieved=True))
+    client.call(UpdateSubmission(submission_id, retrieved=True))
 
 
 if __name__ == "__main__":
@@ -242,17 +244,25 @@ if __name__ == "__main__":
         key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
         full_df = key_pred_df.merge(line_item_df, on=["filename"])
         full_dfs.append(full_df)
-        mark_retreived(INDICO_CLIENT, submission)
 
     output_df = pd.concat(full_dfs)
 
     labels = KEY_FIELDS + ROW_FIELDS
-    col_order = []
+    col_order = ['filename']
     pivot_val_cols = ["text", "confidence"]
     for label in labels:
         for pivot_val_col in pivot_val_cols:
             col_order.append(f"{label} {pivot_val_col}")
 
+    current_cols = set(output_df.columns)
+    missing_cols = list(set(col_order).difference(current_cols))
+    output_df[missing_cols] = None
+
     output_df = output_df[col_order]
+
+    output_filepath = os.path.join(EXPORT_DIR, "export.csv")
+    output_df.to_csv(output_filepath, index=False)
+    # for sub in complete_submissions:
+    #     mark_retreived(INDICO_CLIENT, sub["id"])
 
     output_df.head()
