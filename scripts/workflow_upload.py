@@ -36,3 +36,4 @@ if __name__ == "__main__":
     # move pdfs to completed folder
     for pdf_filepath in pdf_filepaths:
         move_file(pdf_filepath, UPLOADED_DIR)
+
