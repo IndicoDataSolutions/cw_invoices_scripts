@@ -262,7 +262,8 @@ if __name__ == "__main__":
 
     output_filepath = os.path.join(EXPORT_DIR, "export.csv")
     output_df.to_csv(output_filepath, index=False)
-    # for sub in complete_submissions:
-    #     mark_retreived(INDICO_CLIENT, sub["id"])
+
+    for sub in complete_submissions:
+        mark_retreived(INDICO_CLIENT, sub["id"])
 
     output_df.head()
