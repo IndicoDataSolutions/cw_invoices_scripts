@@ -18,6 +18,25 @@ from config import KEY_FIELDS, ROW_FIELDS, INDICO_CLIENT, WORKFLOW_ID, MODEL_NAM
 
 EXPORT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/invoices/uploaded"
 
+
+def assign_confidences(results, model_name):
+    """
+    Append confidences to predictions
+    """
+    preds_pre_review = results["results"]["document"]["results"][model_name]["pre_review"]
+    preds_final = results["results"]["document"]["results"][model_name]["final"]
+
+    for pred_final in preds_final:
+        final_start = pred_final['start']
+        final_end = pred_final['end']
+        for pred_pre_review in preds_pre_review:
+            pre_start = pred_pre_review['start']
+            pre_end = pred_pre_review['end']
+            if final_start == pre_start and final_end == pre_end:
+                pred_final['confidence'] = pred_pre_review['confidence']
+    return preds_final
+
+
 def get_page_extractions(submission, model_name, post_review=True):
     """
     Return predictions and page info for a submission
@@ -44,7 +63,10 @@ def get_page_extractions(submission, model_name, post_review=True):
         page_infos.append(page_text_dict)
 
     # get predictions
-    predictions = results["results"]["document"]["results"][model_name][result_type]
+    if result_type == "pre_review":
+        predictions = results["results"]["document"]["results"][model_name][result_type]
+    else:
+        predictions = assign_confidences(results, model_name)
     return page_infos, predictions
 
 
@@ -211,6 +233,8 @@ def get_submissions(client, workflow_id, status, retrieved):
     # TODO: make this make more sense
     if not retrieved:
         subs = [s for s in subs if not s["retrieved"]]
+
+    subs = [client.call(GetSubmission(sub["id"])) for sub in subs]
     return subs
 
 
@@ -226,10 +250,8 @@ if __name__ == "__main__":
     )
 
     # FULL WORK FLOW
-    model_name = "GOS Invoice Extraction Model q19 model"
     full_dfs = []
-    for sub in complete_submissions:
-        submission = INDICO_CLIENT.call(GetSubmission(sub["id"]))
+    for submission in complete_submissions:
         page_infos, predictions = get_page_extractions(
             submission, MODEL_NAME, post_review=True
         )
