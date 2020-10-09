@@ -243,6 +243,39 @@ def mark_retreived(client, submission_id):
 
 
 if __name__ == "__main__":
+    
+    #Getting Exception Submissions first so that the script exports exceptions even if it does not have any submissions completed in review.
+    exception_submissions = get_submissions(
+    INDICO_CLIENT, WORKFLOW_ID, 'PENDING_ADMIN_REVIEW', False)
+    
+#   exception_submissions=[INDICO_CLIENT.call(GetSubmission(sub.id)) for sub in exception_submissions]
+    
+    #Creating a DataFrame to store Exception Submission IDs and their corresponding filenames
+    exception_ids=[]
+    
+    for es in exception_submissions:
+        exception_ids.append(int(es.id))
+    
+    exception_ids_df=pd.DataFrame(exception_ids, columns=['Submission ID'])
+    
+    exception_filenames=[]
+    
+    for es in exception_submissions:
+        exception_filenames.append(str(es.input_filename))
+    
+    exception_filenames_df=pd.DataFrame(exception_filenames, columns=['File Name'])
+    exceptions_df=pd.concat([exception_ids_df, exception_filenames_df], axis=1)
+    print(exceptions_df)
+    
+    for sub in exception_submissions:
+        mark_retreived(INDICO_CLIENT, sub.id)
+        
+    #Exporting Exception files and their Submission IDs as a CSV
+    exception_filepath = os.path.join(EXPORT_DIR, "exceptions.csv")
+    exceptions_df.to_csv(exception_filepath, index=False)
+    
+    #To export COMPLETE submissions
+
     retrieved = False
     status = "COMPLETE"
     complete_submissions = get_submissions(
@@ -278,7 +311,9 @@ if __name__ == "__main__":
 
     current_cols = set(output_df.columns)
     missing_cols = list(set(col_order).difference(current_cols))
-    output_df[missing_cols] = None
+    for missing_col in missing_cols:
+        output_df[missing_col] =None
+
 
     output_df = output_df[col_order]
 
@@ -286,6 +321,6 @@ if __name__ == "__main__":
     output_df.to_csv(output_filepath, index=False)
 
     for sub in complete_submissions:
-        mark_retreived(INDICO_CLIENT, sub["id"])
-
+        mark_retreived(INDICO_CLIENT, sub.id)
+        
     output_df.head()
