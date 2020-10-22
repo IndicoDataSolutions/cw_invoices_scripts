@@ -1,12 +1,14 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[24]:
-
-
 import os
+import pandas as pd
+from collections import defaultdict
+from indico.queries import (
+    RetrieveStorageObject,
+    SubmissionResult,
+    UpdateSubmission,
+    SubmissionFilter,
+    ListSubmissions,
+)
 from indico import IndicoClient, IndicoConfig
-
 
 
 HOST = os.getenv("INDICO_API_HOST", "cush.indico.domains")
@@ -16,21 +18,23 @@ with open(API_TOKEN_PATH) as f:
 
 my_config = IndicoConfig(host=HOST, api_token=API_TOKEN, verify_ssl=False)
 INDICO_CLIENT = IndicoClient(config=my_config)
+EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
+COMPLETE_STATUS = "COMPLETE"
 
 # NOTE, please configure this to the appropriate ID
 WORKFLOW_ID = 3
 
 # NOTE, please configure this to the appropriate model name
-MODEL_NAME = 'Controllership PO Invoice Processing Model'
+MODEL_NAME = "Controllership PO Invoice Processing Model"
 
 # Field types
 # There should only be one value for each key field
 KEY_FIELDS = [
-    "PO #", 
-    "Company Name", 
+    "PO #",
+    "Company Name",
     "Invoice Number",
     "Invoice Date",
-    "Due Date", 
+    "Due Date",
     "Supplier Name",
     "Remit to Address (Street)",
     "Remit to Address (City)",
@@ -44,28 +48,14 @@ KEY_FIELDS = [
 
 # Row fields will be aggregated into rows
 ROW_FIELDS = [
-    "Unit Cost", 
-    "Quantity", 
-    "Extended Amount", 
+    "Unit Cost",
+    "Quantity",
+    "Extended Amount",
     "Line Item Number",
-    "Line Item Description",  
-    "Week End / Activity", 
-    "Other Charges"
+    "Line Item Description",
+    "Week End / Activity",
+    "Other Charges",
 ]
-
-
-# In[25]:
-
-
-import pandas as pd
-from collections import defaultdict
-from indico.queries import (
-    RetrieveStorageObject,
-    SubmissionResult,
-    UpdateSubmission,
-    GraphQLRequest,
-    GetSubmission,
-)
 
 # from config import KEY_FIELDS, ROW_FIELDS, INDICO_CLIENT, WORKFLOW_ID, MODEL_NAME
 
@@ -73,28 +63,24 @@ from indico.queries import (
 EXPORT_DIR = "C:\\Users\\Gnana Peddi\\Downloads\\Test Completed Folder\\"
 
 
-# In[26]:
-
-
 def assign_confidences(results, model_name):
     """
     Append confidences to predictions
     """
-    preds_pre_review = results["results"]["document"]["results"][model_name]["pre_review"]
+    preds_pre_review = results["results"]["document"]["results"][model_name][
+        "pre_review"
+    ]
     preds_final = results["results"]["document"]["results"][model_name]["final"]
 
     for pred_final in preds_final:
-        final_start = pred_final['start']
-        final_end = pred_final['end']
+        final_start = pred_final["start"]
+        final_end = pred_final["end"]
         for pred_pre_review in preds_pre_review:
-            pre_start = pred_pre_review['start']
-            pre_end = pred_pre_review['end']
+            pre_start = pred_pre_review["start"]
+            pre_end = pred_pre_review["end"]
             if final_start == pre_start and final_end == pre_end:
-                pred_final['confidence'] = pred_pre_review['confidence']
+                pred_final["confidence"] = pred_pre_review["confidence"]
     return preds_final
-
-
-# In[27]:
 
 
 def get_page_extractions(submission, model_name, post_review=True):
@@ -134,9 +120,6 @@ def get_page_extractions(submission, model_name, post_review=True):
     return page_infos, predictions
 
 
-# In[28]:
-
-
 def merge_page_tokens(pages):
     """
     Return a list of tokens from a list of pages
@@ -147,14 +130,8 @@ def merge_page_tokens(pages):
     return tokens
 
 
-# In[29]:
-
-
 def filter_preds(predictions, label_set):
     return [pred for pred in predictions if pred["label"] in label_set]
-
-
-# In[30]:
 
 
 def align_rows(row_predictions, tokens, filename):
@@ -217,9 +194,6 @@ def align_rows(row_predictions, tokens, filename):
     return line_item_df
 
 
-# In[31]:
-
-
 def predictions_to_df(submissions, doc_predictions):
     """
     Convert list of prediction dicts to a vertical df
@@ -241,17 +215,11 @@ def predictions_to_df(submissions, doc_predictions):
     return pred_df
 
 
-# In[32]:
-
-
 def get_top_pred_df(pred_df):
     pred_highest_df = pred_df.loc[
         pred_df.groupby(["filename", "label"])["confidence"].idxmax()
     ]
     return pred_highest_df
-
-
-# In[33]:
 
 
 def vert_to_horizontal(top_conf_df):
@@ -279,9 +247,6 @@ def vert_to_horizontal(top_conf_df):
     return pred_wide_df[col_order].reset_index()
 
 
-# In[34]:
-
-
 def aligned_rows_to_df(aligned_rows):
     df_rows = []
     for row in aligned_rows:
@@ -300,79 +265,54 @@ def aligned_rows_to_df(aligned_rows):
     return pd.DataFrame(df_rows)
 
 
-# In[35]:
-
-
 def get_submissions(client, workflow_id, status, retrieved):
-    qstr = f"""{{
-        submissions( filters: {{status: {status}}}){{
-            submissions{{
-            id
-            inputFile
-            resultFile
-            status
-            retrieved
-            workflowId
-            }}
-        }}
-    }}"""
-    subs = client.call(GraphQLRequest(query=qstr))["submissions"]["submissions"]
-    subs = [s for s in subs if s["workflowId"] == workflow_id and s["status"] == status]
-    # TODO: make this make more sense
-    if not retrieved:
-        subs = [s for s in subs if not s["retrieved"]]
-
-    subs = [client.call(GetSubmission(sub["id"])) for sub in subs]
-    return subs
-
-
-# In[36]:
+    sub_filter = SubmissionFilter(status=status, retrieved=retrieved)
+    complete_submissions = client.call(
+        ListSubmissions(workflow_ids=[workflow_id], filters=sub_filter)
+    )
+    return complete_submissions
 
 
 def mark_retreived(client, submission_id):
     client.call(UpdateSubmission(submission_id, retrieved=True))
 
 
-# In[42]:
-
-
 if __name__ == "__main__":
-    
+    retrieved = False
+    EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     exception_submissions = get_submissions(
-    INDICO_CLIENT, WORKFLOW_ID, 'PENDING_ADMIN_REVIEW', False)
-    
-#   exception_submissions=[INDICO_CLIENT.call(GetSubmission(sub.id)) for sub in exception_submissions]
-    
-    #Creating a DataFrame to store Exception Submission IDs and their corresponding filenames
-    exception_ids=[]
-    
+        INDICO_CLIENT, WORKFLOW_ID, EXCEPTION_STATUS, retrieved
+    )
+
+    #   exception_submissions=[INDICO_CLIENT.call(GetSubmission(sub.id)) for sub in exception_submissions]
+
+    # Creating a DataFrame to store Exception Submission IDs and their corresponding filenames
+    exception_ids = []
+
     for es in exception_submissions:
         exception_ids.append(int(es.id))
-    
-    exception_ids_df=pd.DataFrame(exception_ids, columns=['Submission ID'])
-    
-    exception_filenames=[]
-    
+
+    exception_ids_df = pd.DataFrame(exception_ids, columns=["Submission ID"])
+
+    exception_filenames = []
+
     for es in exception_submissions:
         exception_filenames.append(str(es.input_filename))
-    
-    exception_filenames_df=pd.DataFrame(exception_filenames, columns=['File Name'])
-    exceptions_df=pd.concat([exception_ids_df, exception_filenames_df], axis=1)
+
+    exception_filenames_df = pd.DataFrame(exception_filenames, columns=["File Name"])
+    exceptions_df = pd.concat([exception_ids_df, exception_filenames_df], axis=1)
     print(exceptions_df)
-    
+
     for sub in exception_submissions:
         mark_retreived(INDICO_CLIENT, sub.id)
-        
-    #Exporting Exception files and their Submission IDs as a CSV
+
+    # Exporting Exception files and their Submission IDs as a CSV
     exception_filepath = os.path.join(EXPORT_DIR, "exceptions.csv")
     exceptions_df.to_csv(exception_filepath, index=False)
-    
-    #To export COMPLETE submissions
 
-    retrieved = False
-    status = "COMPLETE"
+    # To export COMPLETE submissions
     complete_submissions = get_submissions(
-        INDICO_CLIENT, WORKFLOW_ID, status, retrieved
+        INDICO_CLIENT, WORKFLOW_ID, COMPLETE_STATUS, retrieved
     )
 
     # FULL WORK FLOW
@@ -386,7 +326,7 @@ if __name__ == "__main__":
 
             key_predictions = filter_preds(predictions, KEY_FIELDS)
             row_predictions = filter_preds(predictions, ROW_FIELDS)
-            
+
             # this may need it's own function/ better abstraction
             if key_predictions:
                 key_preds_vert_df = predictions_to_df([submission], [key_predictions])
@@ -394,76 +334,43 @@ if __name__ == "__main__":
                 key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
                 # if row predctions exist, combine with key predictions
                 if row_predictions:
-                    line_item_df = align_rows(row_predictions, tokens, submission.input_filename)
+                    line_item_df = align_rows(
+                        row_predictions, tokens, submission.input_filename
+                    )
                     full_df = key_pred_df.merge(line_item_df, on=["filename"])
-                    full_dfs.append(full_df) 
+                    full_dfs.append(full_df)
                 # if no row_predictions exist only write key predicitons to csv
                 else:
                     full_dfs.append(key_pred_df)
-            
+
             # only write row predictions if there are no key_predictions
             elif row_predictions:
-                line_item_df = align_rows(row_predictions, tokens, submission.input_filename)
-                full_dfs.append(full_df) 
+                line_item_df = align_rows(
+                    row_predictions, tokens, submission.input_filename
+                )
+                full_dfs.append(full_df)
 
-    output_df = pd.concat(full_dfs)
+    if full_dfs:
+        output_df = pd.concat(full_dfs)
+        labels = KEY_FIELDS + ROW_FIELDS
+        col_order = ["filename"]
+        pivot_val_cols = ["text", "confidence"]
+        for label in labels:
+            for pivot_val_col in pivot_val_cols:
+                col_order.append(f"{label} {pivot_val_col}")
 
-    labels = KEY_FIELDS + ROW_FIELDS
-    col_order = ['filename']
-    pivot_val_cols = ["text", "confidence"]
-    for label in labels:
-        for pivot_val_col in pivot_val_cols:
-            col_order.append(f"{label} {pivot_val_col}")
+        current_cols = set(output_df.columns)
+        missing_cols = list(set(col_order).difference(current_cols))
+        for missing_col in missing_cols:
+            output_df[missing_col] = None
 
-    current_cols = set(output_df.columns)
-    missing_cols = list(set(col_order).difference(current_cols))
-    for missing_col in missing_cols:
-        output_df[missing_col] =None
+        output_df = output_df[col_order]
 
+        output_filepath = os.path.join(EXPORT_DIR, "export.csv")
+        output_df.to_csv(output_filepath, index=False)
 
-    output_df = output_df[col_order]
+        for sub in complete_submissions:
+            mark_retreived(INDICO_CLIENT, sub.id)
 
-    output_filepath = os.path.join(EXPORT_DIR, "export.csv")
-    output_df.to_csv(output_filepath, index=False)
-
-    for sub in complete_submissions:
-        mark_retreived(INDICO_CLIENT, sub.id)
-
-
-# In[38]:
-
-
-# retrieved = False
-# status = "COMPLETE"
-# complete_submissions = get_submissions(
-#     INDICO_CLIENT, WORKFLOW_ID, status, retrieved
-# )
-
-
-# In[39]:
-
-
-# result_l = []
-# for sub in complete_submissions:
-#     sub_job = INDICO_CLIENT.call(SubmissionResult(sub.id, wait=True))
-#     results = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
-#     result_l.append(results)
-
-
-# In[40]:
-
-
-# len(result_l)
-
-
-# In[41]:
-
-
-# result_l[0]['review_rejected']
-
-
-# In[ ]:
-
-
-
-
+    else:
+        print("No COMPLETE submissions to generate export")
