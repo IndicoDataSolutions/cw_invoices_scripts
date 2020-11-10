@@ -18,7 +18,9 @@ def files_from_directory(src_dir, regex="*.*"):
 
 
 def move_file(filepath, outdir):
-    shutil.move(filepath, outdir)
+    filename = os.path.basename(filepath)
+    output_path = os.path.join(outdir, filename)
+    shutil.move(filepath, output_path)
 
 from indico.queries import WorkflowSubmission
 
