@@ -25,39 +25,43 @@ EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
 COMPLETE_STATUS = "COMPLETE"
 
 # NOTE, please configure this to the appropriate ID
-WORKFLOW_ID = 131
+WORKFLOW_ID = 35
 
 # NOTE, please configure this to the appropriate model name
-MODEL_NAME = "VA Merged teach tasks q93 model"
+MODEL_NAME = "Controllership Invoices Retrained Extraction Model 09-21-2020"
 
 # Field types
 # There should only be one value for each key field
 DOC_KEY_FIELDS = [
-    "Comm Slip: Is Signature Valid?",
-    "LOE: Is Signature Valid?",
-    "Comm Slip: Does Document Exist?",
-    "LOE: Does Document Exist?",
-    "POD: Does Document Exist?",
-    "Invoice: Does Document Exist?",
-    "Comm Slip: Gross Fee Total",
-    "LOE:  Total Fee",
+    "PO #",
+    "Company Name",
+    "Invoice Number",
+    "Invoice Date",
+    "Due Date",
+    "Supplier Name",
+    "Remit to Address (Street)",
+    "Remit to Address (City)",
+    "Remit to Address (State)",
+    "Remit to Address (Zip Code)",
+    "Invoice Amount",
+    "Currency",
+    "Tax Amount",
+    "Freight Amount",
+]
+
+ROW_FIELDS = [
+    "Unit Cost",
+    "Quantity",
+    "Extended Amount",
+    "Line Item Number",
+    "Line Item Description",
+    "Week End / Activity",
+    "Other Charges",
 ]
 
 # There should only be one value on each page
 PAGE_KEY_FIELDS = []
 
-# Row fields will be aggregated into rows
-ROW_FIELDS = [
-    "Comm Slip: No Prof Part Allocations",
-    "Comm Slip: Name - Prof Part",
-    "Comm Slip: Allocation - Prof Part",
-    "Comm Slip: Name - Outside Prof Part",
-    "Comm Slip: Earnings - Outside Prof Part",
-    "Comm Slip: Name - CW Brokers Part",
-    "Comm Slip: Earnings - CW Brokers Part",
-    "Comm Slip: Name - Outside CW Part",
-    "Comm Slip: Earnings - Outside CW Part",
-]
 
 EXPORT_DIR = "./"
 

@@ -2,3 +2,4 @@
 .profile
 cw_invoice_env/
 .vscode/
+*.csv
