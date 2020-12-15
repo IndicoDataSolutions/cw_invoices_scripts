@@ -4,7 +4,7 @@ Create a labeled teach task from a labeled dataset using custom graphql queries
 This is a work around until the ability to add data to teach tasks is supported
 in platform
 
-Large assumption: data is uploaded as a csv with labeled data
+The dataset used in this example is a labeled csv file for a CW use case
 """
 import os
 import pandas as pd
