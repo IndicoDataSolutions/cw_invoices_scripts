@@ -11,15 +11,12 @@ import os
 import pandas as pd
 
 from indico import IndicoClient, IndicoConfig
-from indico.queries import (
-    GraphQLRequest,
-    GetDataset
-)
+from indico.queries import GraphQLRequest, GetDataset
 
 from graphql_queries import (
     CREATE_TEACH_TASK,
     GET_TEACH_TASK,
-    SUBMIT_QUESTIONNAIRE_EXAMPLE
+    SUBMIT_QUESTIONNAIRE_EXAMPLE,
 )
 
 
@@ -42,16 +39,26 @@ def create_teach_task(client, dataset_id, teach_task_name):
             }
         ],
     }
-    teach_task = client.call(GraphQLRequest(query=CREATE_TEACH_TASK, variables=variables))
-    teach_task_id = teach_task["createQuestionnaire"]['id']
+    teach_task = client.call(
+        GraphQLRequest(query=CREATE_TEACH_TASK, variables=variables)
+    )
+    teach_task_id = teach_task["createQuestionnaire"]["id"]
     variables = {"id": teach_task_id}
-    teach_task_stats = INDICO_CLIENT.call(GraphQLRequest(query=GET_TEACH_TASK, variables=variables))
-    labelset_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][0]['labelset']["id"]
-    model_group_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][0]["modelGroupId"]
+    teach_task_stats = INDICO_CLIENT.call(
+        GraphQLRequest(query=GET_TEACH_TASK, variables=variables)
+    )
+    labelset_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][
+        0
+    ]["labelset"]["id"]
+    model_group_id = teach_task_stats["questionnaires"]["questionnaires"][0][
+        "questions"
+    ][0]["modelGroupId"]
     return labelset_id, model_group_id
 
 
-def label_teach_task(client, dataset_id, labelset_id, model_group_id, label_df, label_col):
+def label_teach_task(
+    client, dataset_id, labelset_id, model_group_id, label_df, label_col
+):
     for _, row in label_df.iterrows():
         row_index = row.row_index
         labels = row[label_col]
@@ -59,12 +66,17 @@ def label_teach_task(client, dataset_id, labelset_id, model_group_id, label_df, 
             "datasetId": dataset_id,
             "labelsetId": labelset_id,
             "labels": [
-                {"rowIndex": row_index, "target": labels, }
+                {
+                    "rowIndex": row_index,
+                    "target": labels,
+                }
             ],
             "modelGroupId": model_group_id,
         }
 
-        client.call(GraphQLRequest(query=SUBMIT_QUESTIONNAIRE_EXAMPLE, variables=variables))
+        client.call(
+            GraphQLRequest(query=SUBMIT_QUESTIONNAIRE_EXAMPLE, variables=variables)
+        )
 
 
 # NOTE, Configure
@@ -101,11 +113,19 @@ labels = [
     "Tax Amount",
 ]
 
-labelset_id, model_group_id = create_teach_task(INDICO_CLIENT, DATASET_ID, "Test GOS Invoice Task")
+labelset_id, model_group_id = create_teach_task(
+    INDICO_CLIENT, DATASET_ID, "Test GOS Invoice Task"
+)
 variables = {"id": teach_task_id}
-teach_task_stats = INDICO_CLIENT.call(GraphQLRequest(query=GET_TEACH_TASK, variables=variables))
-labelset_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][0]['labelset']["id"]
-model_group_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][0]["modelGroupId"]
+teach_task_stats = INDICO_CLIENT.call(
+    GraphQLRequest(query=GET_TEACH_TASK, variables=variables)
+)
+labelset_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][0][
+    "labelset"
+]["id"]
+model_group_id = teach_task_stats["questionnaires"]["questionnaires"][0]["questions"][
+    0
+]["modelGroupId"]
 
 label_csv_filename = "/home/fitz/Documents/customers/cushman-wakefield/va-invoices/add_reviewed_data_project/data/merged_teach_tasks.csv"
 label_csv = pd.read_csv(label_csv_filename)
@@ -117,9 +137,14 @@ for _, row in label_csv.iterrows():
         "datasetId": DATASET_ID,
         "labelsetId": labelset_id,
         "labels": [
-            {"rowIndex": row_index, "target": target,}
+            {
+                "rowIndex": row_index,
+                "target": target,
+            }
         ],
         "modelGroupId": model_group_id,
     }
-    
-    INDICO_CLIENT.call(GraphQLRequest(query=SUBMIT_QUESTIONNAIRE_EXAMPLE, variables=variables))
+
+    INDICO_CLIENT.call(
+        GraphQLRequest(query=SUBMIT_QUESTIONNAIRE_EXAMPLE, variables=variables)
+    )
