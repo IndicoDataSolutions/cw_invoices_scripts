@@ -2,14 +2,20 @@ import os
 from indico import IndicoClient, IndicoConfig
 
 
-HOST = os.getenv("INDICO_API_HOST", "cush.indico.domains")
-API_TOKEN = os.getenv("CW_INDICO_API_TOKEN")
+HOST = "cush.indico.domains"
 
-my_config = IndicoConfig(host=HOST, api_token=API_TOKEN)
+# NOTE, Configure
+API_TOKEN_PATH = "../../indico_api_token.txt"
+
+# boiler plate code in every script using indico calls
+with open(API_TOKEN_PATH) as f:
+    API_TOKEN = f.read()
+
+my_config = IndicoConfig(host=HOST, api_token=API_TOKEN, verify_ssl=False)
 INDICO_CLIENT = IndicoClient(config=my_config)
 
 # NOTE, please configure this to the appropriate ID
-WORKFLOW_ID = 13
+WORKFLOW_ID = 150
 
 # NOTE, please configure this to the appropriate model name
 MODEL_NAME = 'Invoice Extraction Model 2.0 q8 model'

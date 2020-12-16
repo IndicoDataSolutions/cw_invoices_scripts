@@ -12,7 +12,7 @@ from config import WORKFLOW_ID, INDICO_CLIENT
 
 # TODO: Change this to the appropriate shared drive
 # Should this belong to config?  Or do we want to make these user inputs?
-INVOICE_INPUT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/invoices/docs"
+INVOICE_INPUT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/GOS/model_retrain_with_csv/data/invoice_docs"
 UPLOADED_DIR = "/home/fitz/Documents/customers/cushman-wakefield/invoices/uploaded"
 
 
@@ -34,6 +34,6 @@ if __name__ == "__main__":
     submision_ids = upload_to_workflow(pdf_filepaths, INDICO_CLIENT, WORKFLOW_ID)
 
     # move pdfs to completed folder
-    for pdf_filepath in pdf_filepaths:
-        move_file(pdf_filepath, UPLOADED_DIR)
+    # for pdf_filepath in pdf_filepaths:
+    #     move_file(pdf_filepath, UPLOADED_DIR)
 

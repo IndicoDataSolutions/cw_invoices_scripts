@@ -8,6 +8,8 @@ The dataset used in this example is a labeled csv file for a CW use case
 """
 import os
 import pandas as pd
+import json
+from typing import Iterable
 
 from indico import IndicoClient, IndicoConfig
 from indico.queries import GraphQLRequest, GetDataset, CreateExport, DownloadExport
@@ -79,6 +81,15 @@ def label_teach_task(
         )
 
 
+def get_label_list(labeled_data_df, label_col) -> Iterable[str]:
+    label_set = set()
+    for i, row in labeled_data_df.iterrows():
+        labels = json.loads(row[label_col])
+        for label in labels:
+            label_set.add(label["label"])
+    return list(label_set)
+
+
 if __name__ == "__main__":
 
     # NOTE, Configure
@@ -96,47 +107,35 @@ if __name__ == "__main__":
 
     # NOTE: Configure
     DATASET_ID = 79
-    
+
+    # NOTE: Configure
+    TEACH_TASK_NAME = "Test GOS Invoice Task v3.1"
+
+    # NOTE: CONFIGURE
+    LABEL_COL = "labels"
+
+    # Get labeled dataset
+    export = INDICO_CLIENT.call(
+        CreateExport(dataset_id=DATASET_ID, file_info=True, wait=True)
+    )
+    labeled_data_df = INDICO_CLIENT.call(DownloadExport(export.id))
+
     # NOTE: Configure - Dummy classes allow for the ability to have label tags in review
     dummy_classes = []
 
     # NOTE: Configure - label names of all labels in the indico produced model
-    model_classes = [
-        "Bill To Name",
-        "Client Name",
-        "Client PO#",
-        "Currency",
-        "Extended Amount",
-        "Freight Amount",
-        "Invoice Amount",
-        "Invoice Date",
-        "Invoice Line Description",
-        "Invoice Number",
-        "Remit to Address (City)",
-        "Remit to Address (State)",
-        "Remit to Address (Street)",
-        "Remit to Address (Zip Code)",
-        "Service Date",
-        "Service Location Name",
-        "Supplier Name",
-        "Tax Amount",
-    ]
+    model_classes = get_label_list(labeled_data_df, LABEL_COL)
     full_classes = dummy_classes + model_classes
-
-    # NOTE: Configure
-    TEACH_TASK_NAME = "Test GOS Invoice Task v2.1"
-
-    # NOTE: CONFIGURE
-    LABEL_COL = "labels"
 
     labelset_id, model_group_id = create_teach_task(
         INDICO_CLIENT, DATASET_ID, TEACH_TASK_NAME, full_classes
     )
 
-    # Get labeled dataset
-    export = INDICO_CLIENT.call(CreateExport(dataset_id=DATASET_ID, file_info=True, wait=True))
-    labeled_data_df = INDICO_CLIENT.call(DownloadExport(export.id))    
-
     label_teach_task(
-        INDICO_CLIENT, DATASET_ID, labelset_id, model_group_id, labeled_data_df, LABEL_COL
+        INDICO_CLIENT,
+        DATASET_ID,
+        labelset_id,
+        model_group_id,
+        labeled_data_df,
+        LABEL_COL,
     )
