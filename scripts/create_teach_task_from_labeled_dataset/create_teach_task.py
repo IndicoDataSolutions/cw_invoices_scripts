@@ -61,24 +61,22 @@ def label_teach_task(
     client, dataset_id, labelset_id, model_group_id, label_df, label_col
 ):
     row_index_col = f"row_index_{dataset_id}"
+    labels = []
     for _, row in label_df.iterrows():
         row_index = row[row_index_col]
-        labels = row[label_col]
-        variables = {
-            "datasetId": dataset_id,
-            "labelsetId": labelset_id,
-            "labels": [
-                {
-                    "rowIndex": row_index,
-                    "target": labels,
-                }
-            ],
-            "modelGroupId": model_group_id,
-        }
+        target = row[label_col]
+        labels.append({"rowIndex": row_index, "target": target})
+        
+    variables = {
+        "datasetId": dataset_id,
+        "labelsetId": labelset_id,
+        "labels": labels,
+        "modelGroupId": model_group_id,
+    }
 
-        client.call(
-            GraphQLRequest(query=SUBMIT_QUESTIONNAIRE_EXAMPLE, variables=variables)
-        )
+    client.call(
+        GraphQLRequest(query=SUBMIT_QUESTIONNAIRE_EXAMPLE, variables=variables)
+    )
 
 
 def get_label_list(labeled_data_df, label_col) -> Iterable[str]:
@@ -109,7 +107,7 @@ if __name__ == "__main__":
     DATASET_ID = 79
 
     # NOTE: Configure
-    TEACH_TASK_NAME = "Test GOS Invoice Task v3.1"
+    TEACH_TASK_NAME = "Test GOS Invoice Task v3.2"
 
     # NOTE: CONFIGURE
     LABEL_COL = "labels"
