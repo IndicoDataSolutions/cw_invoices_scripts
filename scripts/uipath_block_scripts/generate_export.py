@@ -81,7 +81,11 @@ def assign_confidences(results, model_name):
         for pred_pre_review in preds_pre_review:
             pre_start = pred_pre_review["start"]
             pre_end = pred_pre_review["end"]
-            if final_start == pre_start and final_end == pre_end:
+            if (
+                final_start == pre_start
+                and final_end == pre_end
+                and pred_final["label"] == pred_pre_review["label"]
+            ):
                 pred_final["confidence"] = pred_pre_review["confidence"]
     return preds_final
 
