@@ -1,0 +1,9 @@
+api_token_path: ../../indico_api_token.txt
+dataset_id: 79
+
+# this must be configured every time you run the code
+# otherwise you will have a hard time telling two review queues apart
+teach_task_name: Test GOS Invoice Task v4.0
+
+# name of the column containing the label dictionaries
+label_column: labels
