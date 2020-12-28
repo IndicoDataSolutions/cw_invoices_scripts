@@ -1,0 +1,4 @@
+host: cush.indico.domains
+api_token_path: ../../indico_api_token.txt
+workflow_id: 151
+model_name: GOS Invoice test model
