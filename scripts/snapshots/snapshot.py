@@ -86,8 +86,12 @@ class Snapshot:
                     label["label"] = new_label_name
             self.label_df.loc[i, self.label_col] = json.dumps(labels)
 
-    def to_csv(self, output_path):
+    def to_df(self):
         snapshot_df = pd.concat([self.label_df, self.text_df], axis=1).reset_index()
+        return snapshot_df
+
+    def to_csv(self, output_path):
+        snapshot_df = self.to_df()
         snapshot_df.to_csv(output_path, index=False)
 
     @classmethod
@@ -95,19 +99,20 @@ class Snapshot:
         snapshot_df = pd.read_csv(csv_filepath)
         return cls(snapshot_df, **kwargs)
 
-    
     @classmethod
-    def from_review_queue(cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL):
+    def from_review_queue(
+        cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL
+    ):
         """
         Generate a snapshot from all documents in the review queue
-        
+
         Key assumption: all complete submissions in review queue are labeled as
         if they were being used in a teach task.
-        
+
         Questions for later: should I just input submission ids here?
                              how can this be sped up for concurrency?
         """
-        
+
         complete_submissions = get_submissions(
             client, workflow_id, COMPLETE_STATUS, False
         )
@@ -162,7 +167,7 @@ class Snapshot:
         # WTF why did I do this?
         if new_dataset:
             snapshot_df[ROW_INDEX_COL] = range(0, snapshot_df.shape[0])
-        
+
         return cls(snapshot_df, label_col=label_col, **kwargs)
 
 
@@ -206,11 +211,11 @@ def _merge_text(snapshots, merged_labels):
     return merged_text.drop_duplicates()
 
 
-
 if __name__ == "__main__":
     snapshot_path = "/home/fitz/Documents/customers/cushman-wakefield/GOS/model_retrain_with_csv/data/snapshot/"
     snapshot_filename = "GOS Combined Dataset New Model 11-12-2020.csv"
     snapshot_filepath = os.path.join(snapshot_path, snapshot_filename)
-    snapshot = Snapshot.from_csv(snapshot_filepath, label_col="labels", filename_col="filename")
+    snapshot = Snapshot.from_csv(
+        snapshot_filepath, label_col="labels", filename_col="filename"
+    )
     snapshot.get_label_list()
-    
