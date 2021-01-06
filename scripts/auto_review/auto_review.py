@@ -64,28 +64,23 @@ PENDING_REVIEW_STATUS = "PENDING_REVIEW"
 COMPLETE_STATUS = "COMPLETE"
 
 
-def auto_review_supplier_name(prediction):
-    confidence = prediction["confidence"]["Supplier Name"]
-    if confidence > 0.98:
-        prediction["accepted"] = True
-    elif confidence < 0.5:
+def reject_by_confidence(prediction, label, conf_threshold=0.50): 
+    if prediction["confidence"][label] < conf_threshold:
         prediction["rejected"] = True
     return prediction
 
 
-def auto_review_by_confidence(prediction, label, low_conf, high_conf):
-    confidence = prediction["confidence"][label]
-    if confidence > high_conf:
+def accept_by_confidence(prediction, label, conf_threshold=0.98):
+    if prediction["confidence"][label] > conf_threshold:
         prediction["accepted"] = True
-    elif confidence < low_conf:
+
+
+def reject_by_character_length(prediction, length_threshold=3):
+    if len(prediction["text"]) < length_threshold:
         prediction["rejected"] = True
     return prediction
 
 
-"""
-Idea for how to apply functions to a class 
-{"Supplier Name": [(fn, high_conf, low_conf), (fn, text_length, threshold)]}
-"""
 if __name__ == "__main__":
 
     # TODO: make this an input arg
@@ -109,9 +104,12 @@ if __name__ == "__main__":
 
         # Note: this is a breaking call because we update the storage object
         # need to be careful with handling this
-        job = indico_wrapper.submit_updated_review(submission, updated_predictions)
+        # job = indico_wrapper.submit_updated_review(submission, updated_predictions)
 
+    """
+    Sample test code when backend changes are made
     pending_review_submissions = indico_wrapper.get_submissions(config.workflow_id, PENDING_REVIEW_STATUS)
+    
     submission = pending_review_submissions[0]
     results = indico_wrapper.get_workflow_output(submission)
     accepted_count = 0
@@ -122,3 +120,4 @@ if __name__ == "__main__":
         if "rejected" in prediction:
             rejected_count += 1
     print(f"# accepted: {accepted_count}, # rejected: {rejected_count}")
+    """
