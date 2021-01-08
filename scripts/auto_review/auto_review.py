@@ -64,23 +64,6 @@ PENDING_REVIEW_STATUS = "PENDING_REVIEW"
 COMPLETE_STATUS = "COMPLETE"
 
 
-def reject_by_confidence(prediction, label, conf_threshold=0.50): 
-    if prediction["confidence"][label] < conf_threshold:
-        prediction["rejected"] = True
-    return prediction
-
-
-def accept_by_confidence(prediction, label, conf_threshold=0.98):
-    if prediction["confidence"][label] > conf_threshold:
-        prediction["accepted"] = True
-
-
-def reject_by_character_length(prediction, length_threshold=3):
-    if len(prediction["text"]) < length_threshold:
-        prediction["rejected"] = True
-    return prediction
-
-
 if __name__ == "__main__":
 
     # TODO: make this an input arg
