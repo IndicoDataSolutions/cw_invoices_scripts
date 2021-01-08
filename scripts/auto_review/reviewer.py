@@ -35,10 +35,9 @@ class Reviewer:
                 fn_name = fn_config["function"]
                 kwargs = fn_config["kwargs"]
                 if fn_config["predictions_set"] == "single":
-                    if fn_config["label_required"]:
-                        review_fn = REVIEWERS[fn_name]
-                        updated_predictions = []
-                        for pred in self.prediction_label_map[label]:
-                            updated_pred = review_fn(pred, label, **kwargs)
-                            updated_predictions.append(updated_pred)
-                        self.prediction_label_map[label] = updated_predictions
+                    review_fn = REVIEWERS[fn_name]
+                    updated_predictions = []
+                    for pred in self.prediction_label_map[label]:
+                        updated_pred = review_fn(pred, label, **kwargs)
+                        updated_predictions.append(updated_pred)
+                    self.prediction_label_map[label] = updated_predictions

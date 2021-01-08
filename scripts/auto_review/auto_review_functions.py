@@ -1,15 +1,15 @@
-def reject_by_confidence(prediction, label, conf_threshold=0.50): 
+def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50): 
     if prediction["confidence"][label] < conf_threshold:
         prediction["rejected"] = True
     return prediction
 
 
-def accept_by_confidence(prediction, label, conf_threshold=0.98):
+def accept_by_confidence(prediction, label="asdf", conf_threshold=0.98):
     if prediction["confidence"][label] > conf_threshold:
         prediction["accepted"] = True
 
 
-def accept_all_by_confidence(predictions, label, conf_threshold=0.98):
+def accept_all_by_confidence(predictions, label="asdf", conf_threshold=0.98):
     pred_values = set()
     for pred in predictions:
         if pred["confidence"][label] < conf_threshold:
