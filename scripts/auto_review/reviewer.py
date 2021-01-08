@@ -4,6 +4,7 @@ from auto_review_functions import (
     accept_by_confidence,
     reject_by_confidence,
     reject_by_character_length,
+    accept_all_by_confidence,
 )
 
 
@@ -11,6 +12,7 @@ REVIEWERS = {
     "accept_by_confidence": accept_by_confidence,
     "reject_by_confidence": reject_by_confidence,
     "reject_by_character_length": reject_by_character_length,
+    "accept_all_by_confidence": accept_all_by_confidence
 }
 
 
@@ -29,5 +31,14 @@ class Reviewer:
 
     def apply_reviews(self):
         for label, fn_configs in self.review_config:
-            for fn_config in review_fn_configs:
-                if 
+            for fn_config in fn_configs:
+                fn_name = fn_config["function"]
+                kwargs = fn_config["kwargs"]
+                if fn_config["predictions_set"] == "single":
+                    if fn_config["label_required"]:
+                        review_fn = REVIEWERS[fn_name]
+                        updated_predictions = []
+                        for pred in self.prediction_label_map[label]:
+                            updated_pred = review_fn(pred, label, **kwargs)
+                            updated_predictions.append(updated_pred)
+                        self.prediction_label_map[label] = updated_predictions
