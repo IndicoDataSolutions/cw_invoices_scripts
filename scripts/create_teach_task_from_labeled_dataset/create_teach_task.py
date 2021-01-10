@@ -104,10 +104,10 @@ if __name__ == "__main__":
     INDICO_CLIENT = IndicoClient(config=my_config)
 
     # NOTE: Configure
-    DATASET_ID = 79
+    DATASET_ID = 97
 
     # NOTE: Configure
-    TEACH_TASK_NAME = "Test GOS Invoice Task v3.2"
+    TEACH_TASK_NAME = "Procurement COI Retrain V1 12-22-20"
 
     # NOTE: CONFIGURE
     LABEL_COL = "labels"
@@ -121,9 +121,21 @@ if __name__ == "__main__":
     # NOTE: Configure - Dummy classes allow for the ability to have label tags in review
     dummy_classes = []
 
+    # NOTE: these are classes that have never been labeled in the teach task
+    # TODO: there should be an automatic way to determine this (compare to old data?)
+    empty_classes = [
+        "CGLInsurence Ltr",
+        "14CGLAddLInsr",
+        "15CGLSUBRWVD",
+        "22ALADDLINSRCK",
+        "23ALSUBRWVDCK",
+        "28WCELSubrCk",
+        "29ExLiabCk",
+        ]
+
     # NOTE: Configure - label names of all labels in the indico produced model
     model_classes = get_label_list(labeled_data_df, LABEL_COL)
-    full_classes = dummy_classes + model_classes
+    full_classes = dummy_classes + model_classes + empty_classes
 
     labelset_id, model_group_id = create_teach_task(
         INDICO_CLIENT, DATASET_ID, TEACH_TASK_NAME, full_classes

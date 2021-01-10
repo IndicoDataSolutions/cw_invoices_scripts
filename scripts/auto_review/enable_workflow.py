@@ -14,14 +14,9 @@ with open(API_TOKEN_PATH) as f:
 
 my_config = IndicoConfig(host=HOST, api_token=API_TOKEN, verify_ssl=False)
 INDICO_CLIENT = IndicoClient(config=my_config)
-EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
-COMPLETE_STATUS = "COMPLETE"
 
 # NOTE, please configure this to the appropriate ID
-WORKFLOW_ID = 141
-
-# NOTE, please configure this to the appropriate model name
-MODEL_NAME = "GOS Invoice test model"
+WORKFLOW_ID = 151
 
 workflow = INDICO_CLIENT.call(
     UpdateWorkflowSettings(WORKFLOW_ID, enable_review=True, enable_auto_review=True)
