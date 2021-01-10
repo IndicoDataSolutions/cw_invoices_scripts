@@ -12,7 +12,7 @@ REVIEWERS = {
     "accept_by_confidence": accept_by_confidence,
     "reject_by_confidence": reject_by_confidence,
     "reject_by_character_length": reject_by_character_length,
-    "accept_all_by_confidence": accept_all_by_confidence
+    "accept_all_by_confidence": accept_all_by_confidence,
 }
 
 
@@ -26,7 +26,7 @@ class Reviewer:
     def format_pred_label_map(self):
         prediction_label_map = defaultdict(list)
         for pred in self.predictions:
-            label = pred['label']
+            label = pred["label"]
             prediction_label_map[label].append(pred)
         return prediction_label_map
 
@@ -43,12 +43,16 @@ class Reviewer:
                         updated_predictions.append(updated_pred)
                     self.prediction_label_map[label] = updated_predictions
                 elif fn_config["prediction_set"] == "all":
-                    updated_predictions = review_fn(self.prediction_label_map[label], **kwargs)
+                    updated_predictions = review_fn(
+                        self.prediction_label_map[label], **kwargs
+                    )
                     self.prediction_label_map[label] = updated_predictions
 
     def get_updated_predictions(self):
         updated_predictions = defaultdict(list)
         for pred_list in self.prediction_label_map.values():
             updated_predictions[self.model_name].extend(pred_list)
-        updated_predictions[self.model_name] = sorted(updated_predictions[self.model_name], key=lambda x: x["start"])
+        updated_predictions[self.model_name] = sorted(
+            updated_predictions[self.model_name], key=lambda x: x["start"]
+        )
         return updated_predictions
