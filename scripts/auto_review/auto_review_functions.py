@@ -7,6 +7,7 @@ def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50):
 def accept_by_confidence(prediction, label="asdf", conf_threshold=0.98):
     if prediction["confidence"][label] > conf_threshold:
         prediction["accepted"] = True
+    return prediction
 
 
 def accept_all_by_confidence(predictions, label="asdf", conf_threshold=0.98):

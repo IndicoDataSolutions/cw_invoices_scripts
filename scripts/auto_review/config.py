@@ -1,45 +1,16 @@
-FIELD_CONFIG = {
-    "Currency": [
-        {
-            "function": "accept_by_confidence",
-            "kwargs": {
-                "label": "Currency",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "single",
-        },
-        {
-            "function": "reject_by_confidence",
-            "kwargs": {
-                "label": "Currency",
-                "conf_threshold": 0.5
-            },
-            "prediction_set": "single",
-        }
-    ],
-    "Supplier Name": [
-        {
-            "function": "accept_all_by_confidence",
-            "kwargs": {
-                "label": "Supplier Name",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
-        {
-            "function": "reject_by_confidence",
-            "kwargs": {
-                "label": "Supplier Name",
-                "conf_threshold": 0.5
-            },
-            "prediction_set": "single",
-        },
-        {
-            "function": "reject_by_character_length",
-            "kwargs": {
-                "length_threshold": 3
-            },
-            "prediction_set": "single",
-        },
-    ]
-}
+import yaml
+
+
+# TODO: need to do config checks for error catching
+class Configuration:
+    def __init__(self, config):
+        self.host = config.get("host")
+        self.api_token_path = config.get("api_token_path")
+        self.workflow_id = config.get("workflow_id")
+        self.model_name = config.get("model_name")
+
+    @classmethod
+    def from_yaml(cls, yaml_filepath):
+        with open(yaml_filepath) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        return cls(config)
