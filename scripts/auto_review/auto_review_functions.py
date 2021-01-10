@@ -1,4 +1,4 @@
-def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50): 
+def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50):
     if prediction["confidence"][label] < conf_threshold:
         prediction["rejected"] = True
     return prediction

@@ -30,23 +30,6 @@ if __name__ == "__main__":
         reviewer.apply_reviews()
         updated_predictions = reviewer.get_updated_predictions()
 
-
         # Note: this is a breaking call because we update the storage object
         # need to be careful with handling this
-        # job = indico_wrapper.submit_updated_review(submission, updated_predictions)
-
-    """
-    Sample test code when backend changes are made
-    pending_review_submissions = indico_wrapper.get_submissions(config.workflow_id, PENDING_REVIEW_STATUS)
-    
-    submission = pending_review_submissions[0]
-    results = indico_wrapper.get_workflow_output(submission)
-    accepted_count = 0
-    rejected_count = 0
-    for prediction in results["results"]["document"]["results"][config.model_name]:
-        if "accepted" in prediction:
-            accepted_count += 1
-        if "rejected" in prediction:
-            rejected_count += 1
-    print(f"# accepted: {accepted_count}, # rejected: {rejected_count}")
-    """
+        job = indico_wrapper.submit_updated_review(submission, updated_predictions)
