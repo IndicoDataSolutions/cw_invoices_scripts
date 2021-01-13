@@ -8,6 +8,7 @@ from indico.queries import (
     SubmissionFilter,
     ListSubmissions,
 )
+import time
 from indico import IndicoClient, IndicoConfig
 
 
@@ -26,6 +27,10 @@ COMPLETE_STATUS = "COMPLETE"
 
 # NOTE, please configure this to the appropriate ID
 WORKFLOW_ID = 35
+
+
+# NOTE, Please configure this to determine how many submissions are run at a time
+BATCH_SIZE = 20
 
 # NOTE, please configure this to the appropriate model name
 MODEL_NAME = "Controllership Invoices Retrained Extraction Model 09-21-2020"
@@ -354,112 +359,123 @@ if __name__ == "__main__":
 
     # FULL WORK FLOW
     full_dfs = []
-    for submission in complete_submissions:
-        page_infos, predictions = get_page_extractions(
-            submission, MODEL_NAME, post_review=True
-        )
-        if predictions:
+    total_submissions = len(complete_submissions)
+    print(f"Starting processing of {total_submissions} submissions")
+    for batch_start in range(0, len(complete_submissions), BATCH_SIZE):
+        batch_end = batch_start + BATCH_SIZE
+        submission_batch = complete_submissions[batch_start:batch_end]
+        
+        for submission in complete_submissions:
+            page_infos, predictions = get_page_extractions(
+                submission, MODEL_NAME, post_review=True
+            )
+            if predictions:
 
-            # first check for manually added preds, add them to exception queue
-            if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
-                exception_ids.append(int(submission.id))
-                exception_filenames.append(str(submission.input_filename))
-                # mark_retreived(INDICO_CLIENT, submission.id)
-                continue
+                # first check for manually added preds, add them to exception queue
+                if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
+                    exception_ids.append(int(submission.id))
+                    exception_filenames.append(str(submission.input_filename))
+                    # mark_retreived(INDICO_CLIENT, submission.id)
+                    continue
 
-            tokens = merge_page_tokens(page_infos)
-            add_page_number(predictions, tokens)
-            doc_key_predictions = filter_preds(predictions, DOC_KEY_FIELDS)
-            page_key_predictions = filter_preds(predictions, PAGE_KEY_FIELDS)
-            row_predictions = filter_preds(predictions, ROW_FIELDS)
+                tokens = merge_page_tokens(page_infos)
+                add_page_number(predictions, tokens)
+                doc_key_predictions = filter_preds(predictions, DOC_KEY_FIELDS)
+                page_key_predictions = filter_preds(predictions, PAGE_KEY_FIELDS)
+                row_predictions = filter_preds(predictions, ROW_FIELDS)
 
-            # this may need it's own function/ better abstraction
-            if doc_key_predictions:
-                key_preds_vert_df = predictions_to_df(
-                    [submission], [doc_key_predictions]
-                )
-                top_conf_key_pred_df = get_top_pred_df(key_preds_vert_df)
-                key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
-
-            if page_key_predictions:
-                key_preds_vert_df = predictions_to_df(
-                    [submission], [page_key_predictions], page_num=True
-                )
-                top_conf_key_pred_df = get_top_pred_df(key_preds_vert_df, page_num=True)
-                page_key_pred_df = vert_to_horizontal(
-                    top_conf_key_pred_df, page_num=True
-                )
-
-            if row_predictions:
-                line_item_df = align_rows(
-                    row_predictions, tokens, submission.input_filename
-                )
-
-            # TODO: this logic is gross
-            if doc_key_predictions:
-                if row_predictions and page_key_predictions:
-                    full_df = key_pred_df.merge(page_key_pred_df, how="outer")
-                    full_df = full_df.merge(
-                        line_item_df, on=["filename", "page_num"], how="outer"
+                # this may need it's own function/ better abstraction
+                if doc_key_predictions:
+                    key_preds_vert_df = predictions_to_df(
+                        [submission], [doc_key_predictions]
                     )
-                else:
-                    if row_predictions:
-                        full_df = key_pred_df.merge(line_item_df, how="outer")
-                    elif page_key_predictions:
-                        full_df = key_pred_df.merge(page_key_pred_df)
-                    else:
-                        full_df = key_pred_df
+                    top_conf_key_pred_df = get_top_pred_df(key_preds_vert_df)
+                    key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
 
-            elif row_predictions:
                 if page_key_predictions:
-                    full_df = line_item_df.merge(
-                        page_key_pred_df, on=["filename", "page_num"], how="outer"
+                    key_preds_vert_df = predictions_to_df(
+                        [submission], [page_key_predictions], page_num=True
                     )
+                    top_conf_key_pred_df = get_top_pred_df(
+                        key_preds_vert_df, page_num=True
+                    )
+                    page_key_pred_df = vert_to_horizontal(
+                        top_conf_key_pred_df, page_num=True
+                    )
+
+                if row_predictions:
+                    line_item_df = align_rows(
+                        row_predictions, tokens, submission.input_filename
+                    )
+
+                # TODO: this logic is gross
+                if doc_key_predictions:
+                    if row_predictions and page_key_predictions:
+                        full_df = key_pred_df.merge(page_key_pred_df, how="outer")
+                        full_df = full_df.merge(
+                            line_item_df, on=["filename", "page_num"], how="outer"
+                        )
+                    else:
+                        if row_predictions:
+                            full_df = key_pred_df.merge(line_item_df, how="outer")
+                        elif page_key_predictions:
+                            full_df = key_pred_df.merge(page_key_pred_df)
+                        else:
+                            full_df = key_pred_df
+
+                elif row_predictions:
+                    if page_key_predictions:
+                        full_df = line_item_df.merge(
+                            page_key_pred_df, on=["filename", "page_num"], how="outer"
+                        )
+                    else:
+                        full_df = line_item_df
+
+                elif doc_key_predictions:
+                    full_df = page_key_pred_df
+
                 else:
-                    full_df = line_item_df
+                    continue
+                full_dfs.append(full_df)
 
-            elif doc_key_predictions:
-                full_df = page_key_pred_df
+        if full_dfs:
+            output_df = pd.concat(full_dfs)
+            labels = DOC_KEY_FIELDS + PAGE_KEY_FIELDS + ROW_FIELDS
+            col_order = ["filename"]
+            pivot_val_cols = ["text", "confidence"]
+            for label in labels:
+                for pivot_val_col in pivot_val_cols:
+                    col_order.append(f"{label} {pivot_val_col}")
 
-            else:
-                continue
-            full_dfs.append(full_df)
+            current_cols = set(output_df.columns)
+            missing_cols = list(set(col_order).difference(current_cols))
+            for missing_col in missing_cols:
+                output_df[missing_col] = None
 
-    if full_dfs:
-        output_df = pd.concat(full_dfs)
-        labels = DOC_KEY_FIELDS + PAGE_KEY_FIELDS + ROW_FIELDS
-        col_order = ["filename"]
-        pivot_val_cols = ["text", "confidence"]
-        for label in labels:
-            for pivot_val_col in pivot_val_cols:
-                col_order.append(f"{label} {pivot_val_col}")
+            doc_key_text_cols = [f"{col} text" for col in DOC_KEY_FIELDS]
+            doc_key_conf_cols = [f"{col} confidence" for col in DOC_KEY_FIELDS]
+            output_df.reset_index(drop=True, inplace=True)
+            output_df[doc_key_text_cols] = output_df.groupby(["filename"], sort=False)[
+                doc_key_text_cols
+            ].apply(lambda x: x.ffill().bfill())
+            output_df[doc_key_conf_cols] = output_df.groupby(["filename"], sort=False)[
+                doc_key_conf_cols
+            ].apply(lambda x: x.ffill().bfill())
+            output_df = output_df[col_order]
 
-        current_cols = set(output_df.columns)
-        missing_cols = list(set(col_order).difference(current_cols))
-        for missing_col in missing_cols:
-            output_df[missing_col] = None
+            timestr = time.strftime("%Y%m%d-%H%M%S")
+            output_filename = f"export_{timestr}.csv"
+            output_filepath = os.path.join(EXPORT_DIR, output_filename)
+            output_df.to_csv(output_filepath, index=False)
+            print(f"Generated export {output_filepath}")
+            total_processed = min(batch_end, total_submissions)
+            print(f"Processed {total_processed}/ {total_submissions} of")
 
-        doc_key_text_cols = [f"{col} text" for col in DOC_KEY_FIELDS]
-        doc_key_conf_cols = [f"{col} confidence" for col in DOC_KEY_FIELDS]
-        output_df.reset_index(drop=True, inplace=True)
-        output_df[doc_key_text_cols] = output_df.groupby(["filename"], sort=False)[
-            doc_key_text_cols
-        ].apply(lambda x: x.ffill().bfill())
-        output_df[doc_key_conf_cols] = output_df.groupby(["filename"], sort=False)[
-            doc_key_conf_cols
-        ].apply(lambda x: x.ffill().bfill())
-        output_df = output_df[col_order]
+            # for sub in complete_submissions:
+            #   mark_retreived(INDICO_CLIENT, sub.id)
 
-        output_filepath = os.path.join(EXPORT_DIR, "VA_export.csv")
-        output_df.to_csv(output_filepath, index=False)
-
-        print("An export file has been generated")
-
-        # for sub in complete_submissions:
-        # mark_retreived(INDICO_CLIENT, sub.id)
-
-    else:
-        print("No COMPLETE submissions to generate export")
+        else:
+            print("No COMPLETE submissions to generate export")
 
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     exception_submissions = get_submissions(
@@ -480,7 +496,7 @@ if __name__ == "__main__":
     exceptions_df = pd.concat([exception_ids_df, exception_filenames_df], axis=1)
 
     # for sub in exception_submissions:
-    # mark_retreived(INDICO_CLIENT, sub.id)
+    #   mark_retreived(INDICO_CLIENT, sub.id)
 
     # Exporting Exception files and their Submission IDs as a CSV
     exception_filepath = os.path.join(EXPORT_DIR, "VA_exceptions.csv")
