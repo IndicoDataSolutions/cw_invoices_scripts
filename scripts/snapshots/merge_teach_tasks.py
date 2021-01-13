@@ -17,12 +17,11 @@ snapshot_2 = Snapshot.from_csv(snapshot_filename)
 
 snapshots = [snapshot_1, snapshot_2]
 merged_snapshot = Snapshot.merge_snapshots(snapshots)
-print(merged_snapshot.get_label_list(),)
 merged_df = merged_snapshot.to_df()
 
 # TODO: Add logic for creating task
 model_fields = merged_snapshot.get_label_list()
-untrained_fields = [
+unlabeled_fields = [
     "Comm Slip: Name - Outside CW Part",
     "Comm Slip: Earnings - Outside CW Part",
 ]
@@ -32,12 +31,12 @@ dummy_fields = [
     "POD: Delivery per Client Agrmt. validated?",
     "Invoice: Accuracy & Billed Client validated?",
 ]
-full_field_list = model_fields + dummy_fields + untrained_fields
+full_field_list = model_fields + dummy_fields + unlabeled_fields
 
 # first create teach task
 dataset = INDICO_CLIENT.call(GetDataset(DATASET_ID))
 source_col_id = dataset.datacolumn_by_name("text").id
-teach_task_name = "V&A Merged Teach Task V3.2"
+teach_task_name = "V&A Merged Teach Task V3.5"
 variables = {
     "name": teach_task_name,
     "processors": [],
