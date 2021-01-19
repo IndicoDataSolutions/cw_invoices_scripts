@@ -36,7 +36,7 @@ full_field_list = model_fields + dummy_fields + unlabeled_fields
 # first create teach task
 dataset = INDICO_CLIENT.call(GetDataset(DATASET_ID))
 source_col_id = dataset.datacolumn_by_name("text").id
-teach_task_name = "V&A Merged Teach Task V3.5"
+teach_task_name = "V&A Merged Teach Task V3.6"
 variables = {
     "name": teach_task_name,
     "processors": [],

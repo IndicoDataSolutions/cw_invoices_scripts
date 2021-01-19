@@ -356,7 +356,7 @@ if __name__ == "__main__":
     complete_submissions = get_submissions(
         INDICO_CLIENT, WORKFLOW_ID, COMPLETE_STATUS, retrieved
     )
-
+ 
     # FULL WORK FLOW
     full_dfs = []
     total_submissions = len(complete_submissions)

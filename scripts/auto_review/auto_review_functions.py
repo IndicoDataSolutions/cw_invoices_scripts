@@ -18,7 +18,7 @@ def accept_all_by_confidence(predictions, label="asdf", conf_threshold=0.98):
         pred_values.add(pred["text"])
     if len(pred_values) == 1:
         for pred in predictions:
-            pred["acccepted"] = True
+            pred["accepted"] = True
     return predictions
 
 
