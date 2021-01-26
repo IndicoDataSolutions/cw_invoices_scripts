@@ -7,7 +7,7 @@ STP.
 from indico.queries import WorkflowSubmission
 
 from utils import files_from_directory, move_file
-from config import WORKFLOW_ID, INDICO_CLIENT
+from indico_config import WORKFLOW_ID, INDICO_CLIENT
 
 
 # TODO: Change this to the appropriate shared drive
