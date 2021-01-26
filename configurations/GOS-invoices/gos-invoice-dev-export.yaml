@@ -1,0 +1,30 @@
+host: cush.indico.domains
+api_token_path: ../../indico_api_token.txt
+workflow_id: 151
+model_name: Test GOS Invoice Task v3.2 q112 model
+DOC_KEY_FIELDS = [
+    "PO #",
+    "Company Name",
+    "Invoice Number",
+    "Invoice Date",
+    "Due Date",
+    "Supplier Name",
+    "Remit to Address (Street)",
+    "Remit to Address (City)",
+    "Remit to Address (State)",
+    "Remit to Address (Zip Code)",
+    "Invoice Amount",
+    "Currency",
+    "Tax Amount",
+    "Freight Amount",
+]
+
+ROW_FIELDS = [
+    "Unit Cost",
+    "Quantity",
+    "Extended Amount",
+    "Line Item Number",
+    "Line Item Description",
+    "Week End / Activity",
+    "Other Charges",
+]

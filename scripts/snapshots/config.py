@@ -13,4 +13,9 @@ INDICO_CLIENT = IndicoClient(config=my_config)
 
 COMPLETE_STATUS = "COMPLETE"
 
-DATASET_ID = 36
+DATASET_ID = 100
+
+SNAPSHOT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/snapshot_merge_01_23-21"
+
+UNLABELED_FIELDS = []
+DUMMY_FIELDS = []

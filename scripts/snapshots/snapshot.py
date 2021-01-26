@@ -146,7 +146,8 @@ class Snapshot:
         label_df = _merge_labels(snapshots)
         text_df = _merge_text(snapshots, label_df)
         snapshot_df = pd.concat([label_df, text_df], axis=1).reset_index()
-        return cls(snapshot_df, label_col=LABEL_COL)
+        text_col = snapshots[0].text_col
+        return cls(snapshot_df, text_col=text_col, label_col=LABEL_COL)
 
     @classmethod
     def stack(cls, snapshots, label_col=TARGET_COL, new_dataset=False, **kwargs):

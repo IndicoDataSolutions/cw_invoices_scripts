@@ -5,6 +5,8 @@ from indico.queries import (
     SubmissionFilter,
 )
 
+import os
+import glob
 import pandas as pd
 
 def get_submissions(client, workflow_id, status, retrieved):
@@ -59,3 +61,9 @@ def read_export(export_path, dataset_id):
     export_df.rename(lambda x: x.replace(f"_{dataset_id}", ""), axis="columns", inplace=True)
     final_columns = [f"row_index", f"file_name", "text"]
     return export_df[final_columns]
+
+
+def get_snapshot_files(snapshot_dir):
+    file_regex = os.path.join(snapshot_dir, "*.csv")
+    snapshot_filepaths = glob.glob(file_regex)
+    return snapshot_filepaths

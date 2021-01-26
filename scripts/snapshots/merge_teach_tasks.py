@@ -1,42 +1,34 @@
 import os
+import glob
 import pandas as pd
 
 from indico.queries import GraphQLRequest, GetDataset
 
-from config import INDICO_CLIENT, COMPLETE_STATUS, DATASET_ID
-from utils import read_export
+from config import (
+    INDICO_CLIENT,
+    COMPLETE_STATUS,
+    DATASET_ID,
+    DUMMY_FIELDS,
+    UNLABELED_FIELDS,
+    SNAPSHOT_DIR,
+)
+from utils import read_export, get_snapshot_files
 from snapshot import Snapshot
 from queries import CREATE_TEACH_TASK, GET_TEACH_TASK, SUBMIT_QUESTIONNAIRE_EXAMPLE
 
-data_dir = "/home/fitz/Documents/customers/cushman-wakefield/va-invoices/add_reviewed_data_project/data/merge_01_02/"
-snapshot_filename = os.path.join(data_dir, "teach_task_125.csv")
-snapshot_1 = Snapshot.from_csv(snapshot_filename)
 
-snapshot_filename = os.path.join(data_dir, "teach_task_93.csv")
-snapshot_2 = Snapshot.from_csv(snapshot_filename)
-
-snapshots = [snapshot_1, snapshot_2]
+snapshot_filepaths = get_snapshot_files(SNAPSHOT_DIR)
+snapshots = [Snapshot.from_csv(s, text_col="document") for s in snapshot_filepaths]
 merged_snapshot = Snapshot.merge_snapshots(snapshots)
 merged_df = merged_snapshot.to_df()
 
-# TODO: Add logic for creating task
 model_fields = merged_snapshot.get_label_list()
-unlabeled_fields = [
-    "Comm Slip: Name - Outside CW Part",
-    "Comm Slip: Earnings - Outside CW Part",
-]
-dummy_fields = [
-    "CM Slip: Execution & Billed Client validated?",
-    "LOE: Execution & Billed Client validated?",
-    "POD: Delivery per Client Agrmt. validated?",
-    "Invoice: Accuracy & Billed Client validated?",
-]
-full_field_list = model_fields + dummy_fields + unlabeled_fields
+full_field_list = model_fields + DUMMY_FIELDS + UNLABELED_FIELDS
 
 # first create teach task
 dataset = INDICO_CLIENT.call(GetDataset(DATASET_ID))
-source_col_id = dataset.datacolumn_by_name("text").id
-teach_task_name = "V&A Merged Teach Task V3.6"
+source_col_id = dataset.datacolumn_by_name("document").id
+teach_task_name = "Yardi Bank Rec Merged 01-23-21 v1.1"
 variables = {
     "name": teach_task_name,
     "processors": [],

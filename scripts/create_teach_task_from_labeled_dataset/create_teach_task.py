@@ -91,10 +91,10 @@ def get_label_list(labeled_data_df, label_col) -> Iterable[str]:
 if __name__ == "__main__":
 
     # NOTE, Configure
-    HOST = os.getenv("INDICO_API_HOST", "cush.indico.domains")
+    HOST = os.getenv("INDICO_API_HOST", "prod-cush.indico.domains")
 
     # NOTE, Configure
-    API_TOKEN_PATH = "../../indico_api_token.txt"
+    API_TOKEN_PATH = "../../prod_indico_api_token.txt"
 
     # boiler plate code in every script using indico calls
     with open(API_TOKEN_PATH) as f:
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     INDICO_CLIENT = IndicoClient(config=my_config)
 
     # NOTE: Configure
-    DATASET_ID = 97
+    DATASET_ID = 7
 
     # NOTE: Configure
     TEACH_TASK_NAME = "Procurement COI Retrain V1 12-22-20"
