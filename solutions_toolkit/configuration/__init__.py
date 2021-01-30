@@ -1,0 +1,1 @@
+from solutions_toolkit.configuration.config import Configuration
