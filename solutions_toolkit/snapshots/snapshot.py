@@ -106,8 +106,11 @@ class Snapshot:
         """
         Generate a snapshot from all documents in the review queue
 
-        Key assumption: all complete submissions in review queue are labeled as
-        if they were being used in a teach task.
+        Key assumptions:
+        -all complete submissions in review queue are labeled as if they were
+         being used in a teach task.
+
+        -all documents must be uploaded to the dataset so they have a row index
 
         Questions for later: should I just input submission ids here?
                              how can this be sped up for concurrency?
