@@ -1,0 +1,15 @@
+HOST: cush.indico.domains
+API_TOKEN_PATH: ../../indico_api_token.txt
+WORKFLOW_ID: 179
+MODEL_NAME: Test GOS Invoice Task v3.2 q112 model
+INVOICE_INPUT_DIR: /home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/upload
+UPLOADED_DIR: /home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/uploaded
+
+WAIT: True
+
+BATCH_SIZE: 5
+
+# Rule of thumb here is 3 page/sec,
+# batch of 5 10-page docs will take ~17 seconds, but better to be safe than annoyed
+# in seconds/batch
+TIMEOUT: 60

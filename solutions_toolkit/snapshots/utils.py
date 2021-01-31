@@ -44,6 +44,8 @@ def find_overlaps(preds1, preds2):
     overlaps = []
     for pred1 in preds1:
         for pred2 in preds2:
+            # note if you are comparing predictions in the same labelset this
+            # will trigger when comparing pred1 to pred1
             if sequences_overlap(pred2, pred1):
                 overlaps.append(
                     (

@@ -1,0 +1,1 @@
+from solutions_toolkit.indico_wrapper.indico_wrapper import IndicoWrapper
