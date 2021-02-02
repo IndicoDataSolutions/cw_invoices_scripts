@@ -1,7 +1,7 @@
-from config import Configuration
-from reviewer import Reviewer
-from field_config import FIELD_CONFIG
-from indico_wrapper import IndicoWrapper
+from solutions_toolkit.auto_review.config import AutoReviewConfiguration
+from solutions_toolkit.auto_review.reviewer import Reviewer
+from solutions_toolkit.auto_review.field_config import FIELD_CONFIG
+from solutions_toolkit.indico_wrapper import IndicoWrapper
 
 
 EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     # TODO: make this an input arg
     configuration_file = "/home/fitz/Documents/customers/cushman-wakefield/invoices/cw_invoices_scripts/scripts/auto_review/config.yaml"
-    config = Configuration.from_yaml(configuration_file)
+    config = AutoReviewConfiguration.from_yaml(configuration_file)
 
     indico_wrapper = IndicoWrapper(config.host, config.api_token_path)
 
