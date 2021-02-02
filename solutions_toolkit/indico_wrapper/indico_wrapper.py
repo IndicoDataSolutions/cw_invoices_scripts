@@ -6,6 +6,7 @@ from indico.queries import (
     GetSubmission,
     WorkflowSubmission,
     WaitForSubmissions,
+    SubmissionResult,
 )
 from indico import IndicoClient, IndicoConfig
 
@@ -42,6 +43,14 @@ class IndicoWrapper:
     def get_workflow_output(self, submission):
         return self.indico_client.call(RetrieveStorageObject(submission.result_file))
 
+    def get_storage_object(self, storage_url):
+        return self.indico_client.call(RetrieveStorageObject(storage_url))
+
+    def get_submission_results(self, submission):
+        sub_job = self.indico_client.call(SubmissionResult(submission.id, wait=True))
+        results = self.get_storage_object(sub_job.result)
+        return results
+
     def submit_updated_review(self, submission, updated_predictions):
         return self.indico_client.call(
             SubmitReview(submission.id, changes=updated_predictions)
@@ -56,5 +65,6 @@ class IndicoWrapper:
         )
 
     def wait_for_submission(self, submission_ids, timeout=60):
-        return self.indico_client.call(WaitForSubmissions(submission_ids=submission_ids, timeout=timeout))
- 
+        return self.indico_client.call(
+            WaitForSubmissions(submission_ids=submission_ids, timeout=timeout)
+        )
