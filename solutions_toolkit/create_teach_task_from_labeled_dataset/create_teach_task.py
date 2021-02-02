@@ -91,10 +91,10 @@ def get_label_list(labeled_data_df, label_col) -> Iterable[str]:
 if __name__ == "__main__":
 
     # NOTE, Configure
-    HOST = os.getenv("INDICO_API_HOST", "prod-cush.indico.domains")
+    HOST = os.getenv("INDICO_API_HOST", "cush.indico.domains")
 
     # NOTE, Configure
-    API_TOKEN_PATH = "../../prod_indico_api_token.txt"
+    API_TOKEN_PATH = "../../indico_api_token.txt"
 
     # boiler plate code in every script using indico calls
     with open(API_TOKEN_PATH) as f:
@@ -104,10 +104,10 @@ if __name__ == "__main__":
     INDICO_CLIENT = IndicoClient(config=my_config)
 
     # NOTE: Configure
-    DATASET_ID = 7
+    DATASET_ID = 116
 
     # NOTE: Configure
-    TEACH_TASK_NAME = "Procurement COI Retrain V1 12-22-20"
+    TEACH_TASK_NAME = "Procurement COI Retrain V1 02-01-2021"
 
     # NOTE: CONFIGURE
     LABEL_COL = "labels"
@@ -124,13 +124,13 @@ if __name__ == "__main__":
     # NOTE: these are classes that have never been labeled in the teach task
     # TODO: there should be an automatic way to determine this (compare to old data?)
     empty_classes = [
-        "CGLInsurence Ltr",
-        "14CGLAddLInsr",
-        "15CGLSUBRWVD",
-        "22ALADDLINSRCK",
-        "23ALSUBRWVDCK",
-        "28WCELSubrCk",
-        "29ExLiabCk",
+        # "CGLInsurence Ltr",
+        # "14CGLAddLInsr",
+        # "15CGLSUBRWVD",
+        # "22ALADDLINSRCK",
+        # "23ALSUBRWVDCK",
+        # "28WCELSubrCk",
+        # "29ExLiabCk",
         ]
 
     # NOTE: Configure - label names of all labels in the indico produced model
