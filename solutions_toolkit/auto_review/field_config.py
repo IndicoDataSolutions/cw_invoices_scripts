@@ -31,7 +31,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
@@ -46,7 +46,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
@@ -61,7 +61,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
@@ -76,7 +76,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
@@ -91,7 +91,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
@@ -106,7 +106,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
@@ -121,7 +121,7 @@ FIELD_CONFIG = {
             "prediction_set": "single",
         },
         {
-            "function": "split_merged_value",
+            "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },

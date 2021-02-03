@@ -1,4 +1,4 @@
 host: cush.indico.domains
-api_token_path: ../../indico_api_token.txt
-workflow_id: 151
-model_name: Test GOS Invoice Task v3.2 q112 model
+api_token_path: /home/fitz/Documents/customers/cushman-wakefield/indico_api_token.txt
+workflow_id: 202
+model_name: Yardi 02-02-21 Post Processing Test Model

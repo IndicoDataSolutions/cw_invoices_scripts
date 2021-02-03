@@ -13,7 +13,7 @@ COMPLETE_STATUS = "COMPLETE"
 if __name__ == "__main__":
 
     # TODO: make this an input arg
-    configuration_file = "/home/fitz/Documents/customers/cushman-wakefield/invoices/cw_invoices_scripts/scripts/auto_review/config.yaml"
+    configuration_file = "/home/fitz/Documents/customers/cushman-wakefield/invoices/cw_invoices_scripts/solutions_toolkit/auto_review/config.yaml"
     config = AutoReviewConfiguration.from_yaml(configuration_file)
 
     indico_wrapper = IndicoWrapper(config.host, config.api_token_path)
