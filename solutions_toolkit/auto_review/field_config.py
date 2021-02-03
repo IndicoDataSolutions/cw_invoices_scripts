@@ -125,5 +125,15 @@ FIELD_CONFIG = {
             "kwargs": {},
             "prediction_set": "all",
         },
+    ],
+    "Ending Balance": [
+        {
+            "function": "reject_by_confidence",
+            "kwargs": {
+                "label": "Ending Balance",
+                "conf_threshold": 0.98
+            },
+            "prediction_set": "single",
+        },
     ]
 }

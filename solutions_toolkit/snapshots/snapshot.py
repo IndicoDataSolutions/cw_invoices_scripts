@@ -6,7 +6,7 @@ from typing import Iterable
 import glob
 import os
 
-from utils import get_submissions, get_submission_labels, find_overlaps
+from solutions_toolkit.snapshots.utils import get_submissions, get_submission_labels, find_overlaps
 
 TARGET_COL = "target"
 LABEL_COL = "question"
@@ -101,7 +101,7 @@ class Snapshot:
 
     @classmethod
     def from_review_queue(
-        cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL
+        cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL, **kwargs
     ):
         """
         Generate a snapshot from all documents in the review queue
@@ -133,7 +133,7 @@ class Snapshot:
         label_df = pd.DataFrame(submission_label_rows)
         label_df.drop_duplicates(subset=FILE_NAME_COL, inplace=True)
         snapshot_df = label_df.merge(dataset_export_df, on=[FILE_NAME_COL])
-        return cls(snapshot_df, label_col=label_col)
+        return cls(snapshot_df, label_col=label_col, **kwargs)
 
     @staticmethod
     def _get_col(col_string, snapshot_df):
