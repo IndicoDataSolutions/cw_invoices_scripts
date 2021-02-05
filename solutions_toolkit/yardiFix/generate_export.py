@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import pandas as pd
 from collections import defaultdict
@@ -14,42 +15,9 @@ from solutions_toolkit.yardiFix.yardi_field_config import FIELD_CONFIG
 from solutions_toolkit.auto_review.reviewer import Reviewer
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 
-config = ExportConfiguration.from_yaml("/home/fitz/Documents/customers/cushman-wakefield/invoices/cw_invoices_scripts/solutions_toolkit/yardiFix/config.yaml")
-# NOTE, Configure
-HOST = config.host
 
-# NOTE, Configure
-API_TOKEN_PATH = config.api_token_path
+USAGE_STRING = "USAGE: python3 -m solutions_toolkit.yardiFix.generate_export <configuration_file>"
 
-# NOTE, please configure this to the appropriate ID
-WORKFLOW_ID = config.workflow_id
-
-# NOTE, please configure this to the appropriate model name
-MODEL_NAME = config.model_name
-
-# Field types
-# There should only be one value for each key field
-DOC_KEY_FIELDS = config.doc_key_fields
-
-PAGE_KEY_FIELDS = config.page_key_fields
-# Row fields will be aggregated into rows
-ROW_FIELDS = config.row_fields
-
-BATCH_SIZE = config.export_batch_size
-
-EXPORT_DIR = config.export_dir
-
-DEBUG = config.debug
-
-STP = config.stp
-
-with open(API_TOKEN_PATH) as f:
-    API_TOKEN = f.read()
-
-my_config = IndicoConfig(host=HOST, api_token=API_TOKEN, verify_ssl=False)
-INDICO_CLIENT = IndicoClient(config=my_config)
-EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
-COMPLETE_STATUS = "COMPLETE"
 
 def assign_confidences(results, model_name):
     """
@@ -329,6 +297,53 @@ def sequences_overlap(true_seq, pred_seq):
 
 
 if __name__ == "__main__":
+    
+    if len(sys.argv) != 2:
+        print(USAGE_STRING)
+        sys.exit()
+
+    configuration_path = sys.argv[1]
+    if not os.path.exists(configuration_path):
+        print(f"configuration file: {configuration_path} does not exist")
+        sys.exit()
+
+    config = ExportConfiguration.from_yaml(configuration_path)
+    # NOTE, Configure
+    HOST = config.host
+
+    # NOTE, Configure
+    API_TOKEN_PATH = config.api_token_path
+
+    # NOTE, please configure this to the appropriate ID
+    WORKFLOW_ID = config.workflow_id
+
+    # NOTE, please configure this to the appropriate model name
+    MODEL_NAME = config.model_name
+
+    # Field types
+    # There should only be one value for each key field
+    DOC_KEY_FIELDS = config.doc_key_fields
+
+    PAGE_KEY_FIELDS = config.page_key_fields
+    # Row fields will be aggregated into rows
+    ROW_FIELDS = config.row_fields
+
+    BATCH_SIZE = config.export_batch_size
+
+    EXPORT_DIR = config.export_dir
+
+    DEBUG = config.debug
+
+    STP = config.stp
+
+    with open(API_TOKEN_PATH) as f:
+        API_TOKEN = f.read()
+
+    my_config = IndicoConfig(host=HOST, api_token=API_TOKEN, verify_ssl=False)
+    INDICO_CLIENT = IndicoClient(config=my_config)
+    EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
+    COMPLETE_STATUS = "COMPLETE"
+
     retrieved = not STP
     exception_ids = []
     exception_filenames = []
