@@ -1,4 +1,4 @@
 host: cush.indico.domains
-api_token_path: ../../indico_api_token.txt
-workflow_id: 151
-model_name: Test GOS Invoice Task v3.2 q112 model
+api_token_path: /home/fitz/Documents/customers/cushman-wakefield/indico_api_token.txt
+workflow_id: 206
+model_name: "Yardi Bank Rec: Retrain 02-02-21 V3 q161 model"

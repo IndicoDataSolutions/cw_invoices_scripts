@@ -1,10 +1,12 @@
 from collections import defaultdict
 
-from auto_review_functions import (
+from solutions_toolkit.auto_review.auto_review_functions import (
     accept_by_confidence,
     reject_by_confidence,
     reject_by_character_length,
     accept_all_by_confidence,
+    split_merged_values,
+    remove_by_confidence
 )
 
 
@@ -13,6 +15,8 @@ REVIEWERS = {
     "reject_by_confidence": reject_by_confidence,
     "reject_by_character_length": reject_by_character_length,
     "accept_all_by_confidence": accept_all_by_confidence,
+    "split_merged_values": split_merged_values,
+    "remove_by_confidence": remove_by_confidence,
 }
 
 

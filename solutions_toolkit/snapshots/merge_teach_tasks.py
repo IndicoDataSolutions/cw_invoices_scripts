@@ -4,7 +4,7 @@ import pandas as pd
 
 from indico.queries import GraphQLRequest, GetDataset
 
-from config import (
+from solutions_toolkit.snapshots.config import (
     INDICO_CLIENT,
     COMPLETE_STATUS,
     DATASET_ID,
@@ -12,13 +12,13 @@ from config import (
     UNLABELED_FIELDS,
     SNAPSHOT_DIR,
 )
-from utils import read_export, get_snapshot_files
-from snapshot import Snapshot
-from queries import CREATE_TEACH_TASK, GET_TEACH_TASK, SUBMIT_QUESTIONNAIRE_EXAMPLE
+from solutions_toolkit.snapshots.utils import  get_snapshot_files
+from solutions_toolkit.snapshots.snapshot import Snapshot
+from solutions_toolkit.snapshots.queries import CREATE_TEACH_TASK, GET_TEACH_TASK, SUBMIT_QUESTIONNAIRE_EXAMPLE
 
 
 snapshot_filepaths = get_snapshot_files(SNAPSHOT_DIR)
-snapshots = [Snapshot.from_csv(s, text_col="document") for s in snapshot_filepaths]
+snapshots = [Snapshot.from_csv(s, text_col="text") for s in snapshot_filepaths]
 merged_snapshot = Snapshot.merge_snapshots(snapshots)
 merged_df = merged_snapshot.to_df()
 
@@ -27,8 +27,8 @@ full_field_list = model_fields + DUMMY_FIELDS + UNLABELED_FIELDS
 
 # first create teach task
 dataset = INDICO_CLIENT.call(GetDataset(DATASET_ID))
-source_col_id = dataset.datacolumn_by_name("document").id
-teach_task_name = "Yardi Bank Rec Merged 01-23-21 v1.1"
+source_col_id = dataset.datacolumn_by_name("text").id
+teach_task_name = "Procurement COI 02-03-21 V1"
 variables = {
     "name": teach_task_name,
     "processors": [],

@@ -6,7 +6,7 @@ from typing import Iterable
 import glob
 import os
 
-from utils import get_submissions, get_submission_labels, find_overlaps
+from solutions_toolkit.snapshots.utils import get_submissions, get_submission_labels, find_overlaps
 
 TARGET_COL = "target"
 LABEL_COL = "question"
@@ -101,7 +101,7 @@ class Snapshot:
 
     @classmethod
     def from_review_queue(
-        cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL
+        cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL, **kwargs
     ):
         """
         Generate a snapshot from all documents in the review queue
@@ -133,7 +133,7 @@ class Snapshot:
         label_df = pd.DataFrame(submission_label_rows)
         label_df.drop_duplicates(subset=FILE_NAME_COL, inplace=True)
         snapshot_df = label_df.merge(dataset_export_df, on=[FILE_NAME_COL])
-        return cls(snapshot_df, label_col=label_col)
+        return cls(snapshot_df, label_col=label_col, **kwargs)
 
     @staticmethod
     def _get_col(col_string, snapshot_df):
@@ -182,7 +182,7 @@ def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
     label_dfs = [s.label_df for s in snapshots]
     labelset_cols = [s.label_col for s in snapshots]
     index_cols = snapshots[0].index_cols
-
+    
     label_df = pd.concat(label_dfs, axis=1, join=join)
     label_df[label_col] = None
 
@@ -201,6 +201,9 @@ def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
             overlaps = find_overlaps(merged_label, labels_to_merge)
             if overlaps:
                 overlap = True
+                print("WARNING: Overlapping labels")
+                print(overlaps)
+                print(row)
             else:
                 merged_label = merged_label + labels_to_merge
         if not overlap:

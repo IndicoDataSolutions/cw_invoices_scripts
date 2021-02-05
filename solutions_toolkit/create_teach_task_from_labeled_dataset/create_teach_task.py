@@ -5,6 +5,8 @@ This is a work around until the ability to add data to teach tasks is supported
 in platform
 
 The dataset used in this example is a labeled csv file for a CW use case
+
+NOTE!!!!! This code isn't modular enough to handle labels from stacked snapshots
 """
 import os
 import pandas as pd
@@ -21,9 +23,9 @@ from graphql_queries import (
 )
 
 
-def create_teach_task(client, dataset_id, teach_task_name, classes):
+def create_teach_task(client, dataset_id, teach_task_name, classes, dataset_type="document"):
     dataset = client.call(GetDataset(dataset_id))
-    source_col_id = dataset.datacolumn_by_name("text").id
+    source_col_id = dataset.datacolumn_by_name(dataset_type).id
     variables = {
         "name": teach_task_name,
         "processors": [],
@@ -58,9 +60,11 @@ def create_teach_task(client, dataset_id, teach_task_name, classes):
 
 
 def label_teach_task(
-    client, dataset_id, labelset_id, model_group_id, label_df, label_col
+    client, dataset_id,  labelset_id, model_group_id, label_df, label_col, row_index_col=None
 ):
-    row_index_col = f"row_index_{dataset_id}"
+    if row_index_col is None:
+        row_index_col = f"row_index_{dataset_id}"    
+    
     labels = []
     for _, row in label_df.iterrows():
         row_index = row[row_index_col]
@@ -104,19 +108,25 @@ if __name__ == "__main__":
     INDICO_CLIENT = IndicoClient(config=my_config)
 
     # NOTE: Configure
-    DATASET_ID = 116
+    DATASET_ID = 100
 
     # NOTE: Configure
-    TEACH_TASK_NAME = "Procurement COI Retrain V1 02-01-2021"
+    TEACH_TASK_NAME = "Yardi Bank Rec: Retrain 02-02-21 V3"
 
     # NOTE: CONFIGURE
-    LABEL_COL = "labels"
+    LABEL_COL = "target"
 
+    SNAPSHOT_FILEPATH = "/home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/stack_review_data_02-02-021/stacked_snapshot.csv"
+    
+    row_index_col = "row_index"
     # Get labeled dataset
-    export = INDICO_CLIENT.call(
-        CreateExport(dataset_id=DATASET_ID, file_info=True, wait=True)
-    )
-    labeled_data_df = INDICO_CLIENT.call(DownloadExport(export.id))
+    if SNAPSHOT_FILEPATH:
+        labeled_data_df = pd.read_csv(SNAPSHOT_FILEPATH)
+    else: 
+        export = INDICO_CLIENT.call(
+            CreateExport(dataset_id=DATASET_ID, file_info=True, wait=True)
+        )
+        labeled_data_df = INDICO_CLIENT.call(DownloadExport(export.id))
 
     # NOTE: Configure - Dummy classes allow for the ability to have label tags in review
     dummy_classes = []
@@ -141,6 +151,7 @@ if __name__ == "__main__":
         INDICO_CLIENT, DATASET_ID, TEACH_TASK_NAME, full_classes
     )
 
+ 
     label_teach_task(
         INDICO_CLIENT,
         DATASET_ID,
@@ -148,4 +159,5 @@ if __name__ == "__main__":
         model_group_id,
         labeled_data_df,
         LABEL_COL,
+        row_index_col=row_index_col
     )

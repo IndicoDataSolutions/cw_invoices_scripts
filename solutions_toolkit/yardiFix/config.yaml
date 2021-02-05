@@ -1,0 +1,67 @@
+# Indico connection configuration
+HOST: cush.indico.domains
+API_TOKEN_PATH: ../../indico_api_token.txt
+
+# model configuration
+WORKFLOW_ID: 206
+MODEL_NAME: "Yardi Bank Rec: Retrain 02-02-21 V3 q161 model"
+
+# True if submissions are not reviewed, false otherwise
+STP: True
+
+# Field type configutations
+# There should only be one value for each key field
+DOC_KEY_FIELDS: 
+  - Account Number 
+  - Ending Date
+  - Opening Balance
+  - Ending Balance
+
+PAGE_KEY_FIELDS: 
+
+# Row fields will be aggregated into rows
+ROW_FIELDS:
+  - Deposit Date
+  - Deposit Amount
+  - Withdrawal Date
+  - Withdrawal Amount
+  - Check Number
+  - Check Date
+  - Check Amount
+  - Service Fee Date
+  - Service Fee Amount
+
+# this script will produice n_submissions / BATCH_SIZE csv files.
+# batch processing help make checkpoints in cases of large amounts of submissions
+EXPORT_BATCH_SIZE: 
+
+# where to store export files
+EXPORT_DIR: "./"
+EXPORT_FILENAME: export.csv
+EXCEPTION_FILENAME: exceptions.csv
+
+# if debug == True, do not mark values retrieved
+DEBUG: True
+
+####################
+# FILE UPLOAD CONFIG
+####################
+
+# Rule of thumb here is 3 page/sec,
+# batch of 5 10-page docs will take ~17 seconds, but better to be safe than annoyed
+# in seconds/batch
+
+# how many documents to uplaod a time
+UPLOAD_BATCH_SIZE: 10
+
+# how long to wait for a batch of documents to upload
+TIMEOUT: 60
+
+# wait for documents to upload before processing next batch
+WAIT: TRUE
+
+# Directory containing documents you want to upload
+DOCUMENT_INPUT_DIR: /home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/upload
+
+# Directory to move documents to after upload
+UPLOADED_DIR: /home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/uploaded

@@ -21,45 +21,117 @@ the REVIEWERS dictionary in reviewer.py
 """
 
 FIELD_CONFIG = {
-    "Remit to Address (State)": [
+    "Check Amount": [
         {
-            "function": "accept_by_confidence",
+            "function": "reject_by_confidence",
             "kwargs": {
-                "label": "Remit to Address (State)",
+                "label": "Check Amount",
                 "conf_threshold": 0.98
             },
             "prediction_set": "single",
         },
         {
-            "function": "reject_by_confidence",
-            "kwargs": {
-                "label": "Remit to Address (State)",
-                "conf_threshold": 0.5
-            },
-            "prediction_set": "single",
-        }
-    ],
-    "Supplier Name": [
-        {
-            "function": "accept_all_by_confidence",
-            "kwargs": {
-                "label": "Supplier Name",
-                "conf_threshold": 0.98
-            },
+            "function": "split_merged_values",
+            "kwargs": {},
             "prediction_set": "all",
         },
+    ],
+    "Check Date": [
         {
             "function": "reject_by_confidence",
             "kwargs": {
-                "label": "Supplier Name",
-                "conf_threshold": 0.5
+                "label": "Check Date",
+                "conf_threshold": 0.98
             },
             "prediction_set": "single",
         },
         {
-            "function": "reject_by_character_length",
+            "function": "split_merged_values",
+            "kwargs": {},
+            "prediction_set": "all",
+        },
+    ],
+    "Check Number": [
+        {
+            "function": "reject_by_confidence",
             "kwargs": {
-                "length_threshold": 3
+                "label": "Check Number",
+                "conf_threshold": 0.98
+            },
+            "prediction_set": "single",
+        },
+        {
+            "function": "split_merged_values",
+            "kwargs": {},
+            "prediction_set": "all",
+        },
+    ],
+    "Deposit Amount": [
+        {
+            "function": "reject_by_confidence",
+            "kwargs": {
+                "label": "Deposit Amount",
+                "conf_threshold": 0.98
+            },
+            "prediction_set": "single",
+        },
+        {
+            "function": "split_merged_values",
+            "kwargs": {},
+            "prediction_set": "all",
+        },
+    ],
+    "Deposit Date": [
+        {
+            "function": "reject_by_confidence",
+            "kwargs": {
+                "label": "Deposit Date",
+                "conf_threshold": 0.98
+            },
+            "prediction_set": "single",
+        },
+        {
+            "function": "split_merged_values",
+            "kwargs": {},
+            "prediction_set": "all",
+        },
+    ],
+    "Withdrawal Amount": [
+        {
+            "function": "reject_by_confidence",
+            "kwargs": {
+                "label": "Withdrawal Amount",
+                "conf_threshold": 0.98
+            },
+            "prediction_set": "single",
+        },
+        {
+            "function": "split_merged_values",
+            "kwargs": {},
+            "prediction_set": "all",
+        },
+    ],
+    "Withdrawal Date": [
+        {
+            "function": "reject_by_confidence",
+            "kwargs": {
+                "label": "Withdrawal Date",
+                "conf_threshold": 0.98
+            },
+            "prediction_set": "single",
+        },
+        {
+            "function": "split_merged_values",
+            "kwargs": {},
+            "prediction_set": "all",
+        },
+    ],
+    "Ending Balance": [
+        {
+            "function": "reject_by_confidence",
+            "kwargs": {
+                "label": "Ending Balance",
+                "conf_threshold": 0.98
             },
             "prediction_set": "single",
         },
