@@ -15,7 +15,7 @@ COMPLETE_STATUS = "COMPLETE"
 
 DATASET_ID = 116
 
-SNAPSHOT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/yardi-bank-rec/data/snapshot_merge_01_23-21"
+SNAPSHOT_DIR = "/home/fitz/Documents/customers/cushman-wakefield/COI/data/merge_02-03-21"
 
 UNLABELED_FIELDS = []
 DUMMY_FIELDS = []

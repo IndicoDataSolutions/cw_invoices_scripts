@@ -182,7 +182,7 @@ def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
     label_dfs = [s.label_df for s in snapshots]
     labelset_cols = [s.label_col for s in snapshots]
     index_cols = snapshots[0].index_cols
-
+    
     label_df = pd.concat(label_dfs, axis=1, join=join)
     label_df[label_col] = None
 
@@ -201,6 +201,9 @@ def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
             overlaps = find_overlaps(merged_label, labels_to_merge)
             if overlaps:
                 overlap = True
+                print("WARNING: Overlapping labels")
+                print(overlaps)
+                print(row)
             else:
                 merged_label = merged_label + labels_to_merge
         if not overlap:

@@ -4,6 +4,14 @@ def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50):
     return prediction
 
 
+def remove_by_confidence(predictions, label="asdf", conf_threshold=0.50):
+    updated_predictions = []
+    for prediction in predictions:
+        if prediction["confidence"][label] > conf_threshold:
+            updated_predictions.append(prediction)
+    return updated_predictions
+
+
 def accept_by_confidence(prediction, label="asdf", conf_threshold=0.98):
     if prediction["confidence"][label] > conf_threshold:
         prediction["accepted"] = True
