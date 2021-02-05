@@ -33,10 +33,12 @@ ROW_FIELDS:
 
 # this script will produice n_submissions / BATCH_SIZE csv files.
 # batch processing help make checkpoints in cases of large amounts of submissions
-EXPORT_BATCH_SIZE: 40
+EXPORT_BATCH_SIZE: 
 
 # where to store export files
 EXPORT_DIR: "./"
+EXPORT_FILENAME: export.csv
+EXCEPTION_FILENAME: exceptions.csv
 
 # if debug == True, do not mark values retrieved
 DEBUG: True

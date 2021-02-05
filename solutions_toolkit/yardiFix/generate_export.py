@@ -16,7 +16,9 @@ from solutions_toolkit.auto_review.reviewer import Reviewer
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 
 
-USAGE_STRING = "USAGE: python3 -m solutions_toolkit.yardiFix.generate_export <configuration_file>"
+USAGE_STRING = (
+    "USAGE: python3 -m solutions_toolkit.yardiFix.generate_export <configuration_file>"
+)
 
 
 def assign_confidences(results, model_name):
@@ -297,7 +299,7 @@ def sequences_overlap(true_seq, pred_seq):
 
 
 if __name__ == "__main__":
-    
+
     if len(sys.argv) != 2:
         print(USAGE_STRING)
         sys.exit()
@@ -331,7 +333,8 @@ if __name__ == "__main__":
     BATCH_SIZE = config.export_batch_size
 
     EXPORT_DIR = config.export_dir
-
+    EXPORT_FILENAME = config.export_filename
+    EXCEPTION_FILENAME = config.exception_filename
     DEBUG = config.debug
 
     STP = config.stp
@@ -359,6 +362,9 @@ if __name__ == "__main__":
     )
 
     total_submissions = len(complete_submissions)
+    if BATCH_SIZE is None:
+        BATCH_SIZE = total_submissions
+
     print(f"Starting processing of {total_submissions} submissions")
     for batch_start in range(0, len(complete_submissions), BATCH_SIZE):
         batch_end = batch_start + BATCH_SIZE
@@ -375,7 +381,7 @@ if __name__ == "__main__":
                     reviewer = Reviewer(inital_predictions, MODEL_NAME, FIELD_CONFIG)
                     reviewer.apply_reviews()
                     predictions = reviewer.get_updated_predictions()[MODEL_NAME]
-                
+
                 # first check for manually added preds, add them to exception queue
                 if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
                     exception_ids.append(int(submission.id))
@@ -469,14 +475,12 @@ if __name__ == "__main__":
             ].apply(lambda x: x.ffill().bfill())
             output_df = output_df[col_order]
 
-            timestr = time.strftime("%Y%m%d-%H%M%S")
-            output_filename = f"yardi_export_{timestr}.csv"
-            output_filepath = os.path.join(EXPORT_DIR, output_filename)
+            output_filepath = os.path.join(EXPORT_DIR, EXPORT_FILENAME)
             output_df.to_csv(output_filepath, index=False)
             print(f"Generated export {output_filepath}")
             total_processed = min(batch_end, total_submissions)
             print(f"Processed {total_processed}/ {total_submissions}")
-            
+
             if not DEBUG:
                 for sub in complete_submissions:
                     mark_retreived(INDICO_CLIENT, sub.id)
@@ -500,23 +504,25 @@ if __name__ == "__main__":
         exception_filenames.append(str(es.input_filename))
 
     exception_filenames_df = pd.DataFrame(exception_filenames, columns=["File Name"])
-
-    for es in exception_submissions:
-        sub_job = INDICO_CLIENT.call(SubmissionResult(es.id, wait=True))
-        result = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
-        exceptions_revID.append(result.get("reviewer_id"))
-
-    exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
     exceptions_df = pd.concat(
-        [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
+        [exception_filenames_df, exception_ids_df], axis=1
     )
+    # for es in exception_submissions:
+    #     sub_job = INDICO_CLIENT.call(SubmissionResult(es.id, wait=True))
+    #     result = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
+    #     exceptions_revID.append(result.get("reviewer_id"))
+
+    # exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
+    # exceptions_df = pd.concat(
+    #     [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
+    # )
 
     if not DEBUG:
         for sub in exception_submissions:
             mark_retreived(INDICO_CLIENT, sub.id)
 
     # Exporting Exception files and their Submission IDs as a CSV
-    exception_filepath = os.path.join(EXPORT_DIR, "exceptions.csv")
+    exception_filepath = os.path.join(EXPORT_DIR, EXCEPTION_FILENAME)
     exceptions_df.to_csv(exception_filepath, index=False)
-
+    print(f"Generated export {exception_filepath}")
     print("An exception file has been generated")

@@ -15,14 +15,16 @@ class ExportConfiguration(Configuration):
         self.timeout = self.get_key("TIMEOUT")
         self.wait = self.get_key("WAIT")
 
-        self.export_batch_size = self.get_list_key("EXPORT_BATCH_SIZE")
+        self.export_batch_size = self.get_key("EXPORT_BATCH_SIZE")
         self.doc_key_fields = self.get_list_key("DOC_KEY_FIELDS")
         self.page_key_fields = self.get_list_key("PAGE_KEY_FIELDS")
-        self.row_fields = self.get_key("ROW_FIELDS")
+        self.row_fields = self.get_list_key("ROW_FIELDS")
         self.export_dir = self.get_key("EXPORT_DIR")
         self.stp = self.get_key("STP")
         self.debug = self.get_key("DEBUG")
-        
+        self.export_filename = self.get_key("EXPORT_FILENAME")
+        self.exception_filename = self.get_key("EXCEPTION_FILENAME")
+
     # TODO: this check needs to go layers deep
     def get_key(self, key):
         try:

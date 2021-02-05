@@ -23,28 +23,12 @@ the REVIEWERS dictionary in reviewer.py
 FIELD_CONFIG = {
     "Check Amount": [
         {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Check Amount",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
-        {
             "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
     ],
     "Check Date": [
-        {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Check Date",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
         {
             "function": "split_merged_values",
             "kwargs": {},
@@ -53,28 +37,12 @@ FIELD_CONFIG = {
     ],
     "Check Number": [
         {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Check Number",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
-        {
             "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
     ],
     "Deposit Amount": [
-        {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Deposit Amount",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
         {
             "function": "split_merged_values",
             "kwargs": {},
@@ -83,28 +51,12 @@ FIELD_CONFIG = {
     ],
     "Deposit Date": [
         {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Deposit Date",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
-        {
             "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
     ],
     "Withdrawal Amount": [
-        {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Withdrawal Amount",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
         {
             "function": "split_merged_values",
             "kwargs": {},
@@ -113,27 +65,9 @@ FIELD_CONFIG = {
     ],
     "Withdrawal Date": [
         {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Withdrawal Date",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
-        {
             "function": "split_merged_values",
             "kwargs": {},
             "prediction_set": "all",
         },
     ],
-    "Ending Balance": [
-        {
-            "function": "remove_by_confidence",
-            "kwargs": {
-                "label": "Ending Balance",
-                "conf_threshold": 0.98
-            },
-            "prediction_set": "all",
-        },
-    ]
 }
