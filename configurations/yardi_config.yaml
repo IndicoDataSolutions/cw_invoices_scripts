@@ -8,7 +8,15 @@ MODEL_NAME: "Yardi Bank Rec: Retrain 02-02-21 V3 q161 model"
 
 # True if submissions are not reviewed, false otherwise
 STP: True
+
+# apply post processing to predictions
+POST_PROCESSING: True
+
+# location of post processing config file
 FIELD_CONFIG_FILE: "/home/fitz/Documents/customers/cushman-wakefield/invoices/solutions_toolkit/configurations/yardi_field_config.yaml"
+
+# pull retrieved data
+RETRIEVED: False
 
 # Field type configutations
 # There should only be one value for each key field

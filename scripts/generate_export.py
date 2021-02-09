@@ -302,7 +302,7 @@ if __name__ == "__main__":
     DOC_KEY_FIELDS = config.doc_key_fields
     PAGE_KEY_FIELDS = config.page_key_fields
     ROW_FIELDS = config.row_fields
-
+    POST_PROCESSING = config.post_processing
     BATCH_SIZE = config.export_batch_size
 
     EXPORT_DIR = config.export_dir
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     COMPLETE_STATUS = "COMPLETE"
 
     indico_wrapper = IndicoWrapper(HOST, API_TOKEN_PATH)
-    retrieved = not STP
+    retrieved = config.retrieved
     post_review = not STP
     exception_ids = []
     exception_filenames = []
@@ -340,6 +340,7 @@ if __name__ == "__main__":
         batched_submissions = range(0, len(complete_submissions), BATCH_SIZE)
     else:
         batched_submissions = []
+        
     for batch_start in batched_submissions:
         batch_end = batch_start + BATCH_SIZE
         submission_batch = complete_submissions[batch_start:batch_end]
@@ -351,7 +352,7 @@ if __name__ == "__main__":
             )
             if predictions:
                 # apply post processing functions
-                if STP:
+                if POST_PROCESSING:
                     inital_predictions = {MODEL_NAME: predictions}
                     reviewer = Reviewer(inital_predictions, MODEL_NAME, field_config)
                     reviewer.apply_reviews()
