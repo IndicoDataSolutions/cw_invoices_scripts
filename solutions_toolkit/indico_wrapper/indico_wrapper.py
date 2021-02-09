@@ -7,6 +7,7 @@ from indico.queries import (
     WorkflowSubmission,
     WaitForSubmissions,
     SubmissionResult,
+    UpdateSubmission,
 )
 from indico import IndicoClient, IndicoConfig
 
@@ -68,3 +69,6 @@ class IndicoWrapper:
         return self.indico_client.call(
             WaitForSubmissions(submission_ids=submission_ids, timeout=timeout)
         )
+
+    def mark_retreived(self, submission):
+        self.indico_client.call(UpdateSubmission(submission.id, retrieved=True))

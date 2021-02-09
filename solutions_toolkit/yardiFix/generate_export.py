@@ -14,6 +14,7 @@ from indico import IndicoClient, IndicoConfig
 from solutions_toolkit.yardiFix.yardi_field_config import FIELD_CONFIG
 from solutions_toolkit.auto_review.reviewer import Reviewer
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
+from solutions_toolkit.indico_wrapper import IndicoWrapper
 
 
 USAGE_STRING = (
@@ -41,7 +42,7 @@ def assign_confidences(results, model_name):
     return preds_final
 
 
-def get_page_extractions(submission, model_name, post_review=False):
+def get_page_extractions(indico_wrapper, submission, model_name, post_review=False):
     """
     Return predictions and page info for a submission
     post_review is a flag to select either the final reviewed values
@@ -52,17 +53,16 @@ def get_page_extractions(submission, model_name, post_review=False):
     else:
         result_type = "pre_review"
 
-    sub_job = INDICO_CLIENT.call(SubmissionResult(submission.id, wait=True))
-    results = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
+    results = indico_wrapper.get_submission_results(submission)
 
     # get page info
     etl_output_url = results["etl_output"]
-    etl_output = INDICO_CLIENT.call(RetrieveStorageObject(etl_output_url))
+    etl_output = indico_wrapper.get_storage_object(etl_output_url)
 
     page_infos = []
     for page in etl_output["pages"]:
         page_info_url = page["page_info"]
-        page_text_dict = INDICO_CLIENT.call(RetrieveStorageObject(page_info_url))
+        page_text_dict = indico_wrapper.get_storage_object(page_info_url)
         page_infos.append(page_text_dict)
 
     # get predictions
@@ -263,18 +263,6 @@ def aligned_rows_to_df(aligned_rows):
     return pd.DataFrame(df_rows)
 
 
-def get_submissions(client, workflow_id, status, retrieved):
-    sub_filter = SubmissionFilter(status=status, retrieved=retrieved)
-    complete_submissions = client.call(
-        ListSubmissions(workflow_ids=[workflow_id], filters=sub_filter)
-    )
-    return complete_submissions
-
-
-def mark_retreived(client, submission_id):
-    client.call(UpdateSubmission(submission_id, retrieved=True))
-
-
 def contains_added_text(predictions, fields):
     for pred in predictions:
         if (
@@ -347,6 +335,7 @@ if __name__ == "__main__":
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     COMPLETE_STATUS = "COMPLETE"
 
+    indico_wrapper = IndicoWrapper(HOST, API_TOKEN_PATH)
     retrieved = not STP
     exception_ids = []
     exception_filenames = []
@@ -357,8 +346,8 @@ if __name__ == "__main__":
     exceptions_revID = []
 
     # To export COMPLETE submissions
-    complete_submissions = get_submissions(
-        INDICO_CLIENT, WORKFLOW_ID, COMPLETE_STATUS, retrieved
+    complete_submissions = indico_wrapper.get_submissions(
+        WORKFLOW_ID, COMPLETE_STATUS, retrieved
     )
 
     total_submissions = len(complete_submissions)
@@ -373,7 +362,7 @@ if __name__ == "__main__":
         full_dfs = []
         for submission in complete_submissions:
             page_infos, predictions = get_page_extractions(
-                submission, MODEL_NAME, post_review=False
+                indico_wrapper, submission, MODEL_NAME, post_review=False
             )
             if predictions:
                 if STP:
@@ -387,7 +376,7 @@ if __name__ == "__main__":
                     exception_ids.append(int(submission.id))
                     exception_filenames.append(str(submission.input_filename))
                     if not DEBUG:
-                        mark_retreived(INDICO_CLIENT, submission.id)
+                        indico_wrapper.mark_retreived(sub)
                     continue
 
                 tokens = merge_page_tokens(page_infos)
@@ -483,14 +472,14 @@ if __name__ == "__main__":
 
             if not DEBUG:
                 for sub in complete_submissions:
-                    mark_retreived(INDICO_CLIENT, sub.id)
+                    indico_wrapper.mark_retreived(sub)
 
         else:
             print("No COMPLETE submissions to generate export")
 
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
-    exception_submissions = get_submissions(
-        INDICO_CLIENT, WORKFLOW_ID, EXCEPTION_STATUS, retrieved
+    exception_submissions = indico_wrapper.get_submissions(
+        WORKFLOW_ID, EXCEPTION_STATUS, retrieved
     )
 
     # Creating a DataFrame to store Exception Submission IDs and their corresponding filenames
@@ -504,9 +493,7 @@ if __name__ == "__main__":
         exception_filenames.append(str(es.input_filename))
 
     exception_filenames_df = pd.DataFrame(exception_filenames, columns=["File Name"])
-    exceptions_df = pd.concat(
-        [exception_filenames_df, exception_ids_df], axis=1
-    )
+    exceptions_df = pd.concat([exception_filenames_df, exception_ids_df], axis=1)
     # for es in exception_submissions:
     #     sub_job = INDICO_CLIENT.call(SubmissionResult(es.id, wait=True))
     #     result = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
@@ -519,7 +506,7 @@ if __name__ == "__main__":
 
     if not DEBUG:
         for sub in exception_submissions:
-            mark_retreived(INDICO_CLIENT, sub.id)
+            indico_wrapper.mark_retreived(sub)
 
     # Exporting Exception files and their Submission IDs as a CSV
     exception_filepath = os.path.join(EXPORT_DIR, EXCEPTION_FILENAME)
