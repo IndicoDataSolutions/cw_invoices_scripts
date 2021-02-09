@@ -1,6 +1,6 @@
 # Indico connection configuration
 HOST: cush.indico.domains
-API_TOKEN_PATH: /home/fitz/Documents/customers/cushman-wakefield/indico_api_token.txt
+API_TOKEN_PATH: "/home/fitz/Documents/customers/cushman-wakefield/indico_api_token.txt"
 
 # model configuration
 WORKFLOW_ID: 206
@@ -8,6 +8,7 @@ MODEL_NAME: "Yardi Bank Rec: Retrain 02-02-21 V3 q161 model"
 
 # True if submissions are not reviewed, false otherwise
 STP: True
+FIELD_CONFIG_FILE: "/home/fitz/Documents/customers/cushman-wakefield/invoices/solutions_toolkit/configurations/yardi_field_config.yaml"
 
 # Field type configutations
 # There should only be one value for each key field
@@ -41,7 +42,7 @@ EXPORT_FILENAME: export.csv
 EXCEPTION_FILENAME: exceptions.csv
 
 # if debug == True, do not mark values retrieved
-DEBUG: True
+DEBUG: False
 
 ####################
 # FILE UPLOAD CONFIG

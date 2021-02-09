@@ -6,3 +6,5 @@ cw_invoice_env/
 notebooks/
 .ipython*
 *.ipynb
+venv/
+*.egg-info/

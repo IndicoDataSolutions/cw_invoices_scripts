@@ -289,7 +289,10 @@ if __name__ == "__main__":
         sys.exit()
 
     config = ExportConfiguration.from_yaml(configuration_path)
-
+    FIELD_CONFIG_FILEPATH = config.field_config_filepath
+    if FIELD_CONFIG_FILEPATH:
+        field_config_obj = FieldConfiguration.from_yaml(FIELD_CONFIG_FILEPATH)
+        field_config = field_config_obj.field_config
     HOST = config.host
     API_TOKEN_PATH = config.api_token_path
 
@@ -307,7 +310,7 @@ if __name__ == "__main__":
     EXCEPTION_FILENAME = config.exception_filename
     DEBUG = config.debug
     STP = config.stp
-    FIELD_CONFIG_FILEPATH = config.field_config_filepath
+    
     
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     COMPLETE_STATUS = "COMPLETE"
@@ -333,7 +336,11 @@ if __name__ == "__main__":
         BATCH_SIZE = total_submissions
 
     print(f"Starting processing of {total_submissions} submissions")
-    for batch_start in range(0, len(complete_submissions), BATCH_SIZE):
+    if complete_submissions:
+        batched_submissions = range(0, len(complete_submissions), BATCH_SIZE)
+    else:
+        batched_submissions = []
+    for batch_start in batched_submissions:
         batch_end = batch_start + BATCH_SIZE
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
@@ -345,7 +352,6 @@ if __name__ == "__main__":
             if predictions:
                 # apply post processing functions
                 if STP:
-                    field_config = FieldConfiguration(FIELD_CONFIG_FILEPATH)
                     inital_predictions = {MODEL_NAME: predictions}
                     reviewer = Reviewer(inital_predictions, MODEL_NAME, field_config)
                     reviewer.apply_reviews()

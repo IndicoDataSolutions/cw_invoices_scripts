@@ -14,13 +14,14 @@ class ExportConfiguration(Configuration):
         self.uploaded_dir = self.get_key("UPLOADED_DIR")
         self.timeout = self.get_key("TIMEOUT")
         self.wait = self.get_key("WAIT")
-
+        
         self.export_batch_size = self.get_key("EXPORT_BATCH_SIZE")
         self.doc_key_fields = self.get_list_key("DOC_KEY_FIELDS")
         self.page_key_fields = self.get_list_key("PAGE_KEY_FIELDS")
         self.row_fields = self.get_list_key("ROW_FIELDS")
         self.export_dir = self.get_key("EXPORT_DIR")
         self.stp = self.get_key("STP")
+        self.field_config_filepath = self.get_key("FIELD_CONFIG_FILE")
         self.debug = self.get_key("DEBUG")
         self.export_filename = self.get_key("EXPORT_FILENAME")
         self.exception_filename = self.get_key("EXCEPTION_FILENAME")

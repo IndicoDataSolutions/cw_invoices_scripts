@@ -39,7 +39,7 @@ class Reviewer:
             for fn_config in fn_configs:
                 fn_name = fn_config["function"]
                 review_fn = REVIEWERS[fn_name]
-                kwargs = fn_config["kwargs"]
+                kwargs = fn_config["kwargs"] if fn_config["kwargs"] else {}
                 if fn_config["prediction_set"] == "single":
                     updated_predictions = []
                     for pred in self.prediction_label_map[label]:
