@@ -346,7 +346,7 @@ if __name__ == "__main__":
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
         full_dfs = []
-        for submission in complete_submissions:
+        for submission in submission_batch:
             page_infos, predictions = get_page_extractions(
                 indico_wrapper, submission, MODEL_NAME, post_review=post_review
             )

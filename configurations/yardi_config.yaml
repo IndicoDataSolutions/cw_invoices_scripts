@@ -50,7 +50,7 @@ EXPORT_FILENAME: export.csv
 EXCEPTION_FILENAME: exceptions.csv
 
 # if debug == True, do not mark values retrieved
-DEBUG: False
+DEBUG: True
 
 ####################
 # FILE UPLOAD CONFIG
