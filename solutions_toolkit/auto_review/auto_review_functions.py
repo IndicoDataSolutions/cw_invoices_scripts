@@ -41,7 +41,7 @@ def split_merged_values(predictions):
     for pred in predictions:
         merged_text = pred["text"]
         start = pred["start"]
-        split_text = merged_text.split("\n")
+        split_text = merged_text.split()
         if len(split_text) == 1 or pred.get("rejected"):
             updated_predictions.append(pred)
             continue
