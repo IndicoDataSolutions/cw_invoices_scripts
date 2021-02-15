@@ -7,6 +7,7 @@ from indico.queries import (
 
 import os
 import glob
+import json
 import pandas as pd
 
 def get_submissions(client, workflow_id, status, retrieved):
@@ -69,3 +70,17 @@ def get_snapshot_files(snapshot_dir):
     file_regex = os.path.join(snapshot_dir, "*.csv")
     snapshot_filepaths = glob.glob(file_regex)
     return snapshot_filepaths
+
+
+def filter_labels(label_string, split_classes):
+    """
+    Given a label string, return a new label string only containing classes
+    from split classes. Some performance benefits from making split_classes a
+    set
+    """
+    labels = json.loads(label_string)
+    split_labels = []
+    for label in labels:
+        if label["label"] in split_classes:
+            split_labels.append(label)
+    return json.dumps(split_labels)
