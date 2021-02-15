@@ -91,4 +91,4 @@ class IndicoWrapper:
         )
 
     def download_export(self, export_id):
-        return self.indico_wrapper.call(DownloadExport(export_id)
+        return self.indico_wrapper.call(DownloadExport(export_id))
