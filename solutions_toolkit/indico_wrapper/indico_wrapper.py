@@ -8,6 +8,10 @@ from indico.queries import (
     WaitForSubmissions,
     SubmissionResult,
     UpdateSubmission,
+    GraphQLRequest,
+    GetDataset,
+    CreateExport,
+    DownloadExport
 )
 from indico import IndicoClient, IndicoConfig
 
@@ -72,3 +76,19 @@ class IndicoWrapper:
 
     def mark_retreived(self, submission):
         self.indico_client.call(UpdateSubmission(submission.id, retrieved=True))
+
+    def graphQL_request(self, graphql_query, variables):
+        return self.indico_client.call(
+            GraphQLRequest(query=graphql_query, variables=variables)
+        )
+
+    def get_dataset(self, dataset_id):
+        return self.indico_client.call(GetDataset(dataset_id))
+
+    def create_export(self, dataset_id, file_info=True, wait=True):
+        return self.indico_client.call(
+            CreateExport(dataset_id=dataset_id, file_info=file_info, wait=wait)
+        )
+
+    def download_export(self export_id):
+        return self.indico_wrapper.call(DownloadExport(export_id)
