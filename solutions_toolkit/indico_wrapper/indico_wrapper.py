@@ -90,5 +90,5 @@ class IndicoWrapper:
             CreateExport(dataset_id=dataset_id, file_info=file_info, wait=wait)
         )
 
-    def download_export(self export_id):
+    def download_export(self, export_id):
         return self.indico_wrapper.call(DownloadExport(export_id)
