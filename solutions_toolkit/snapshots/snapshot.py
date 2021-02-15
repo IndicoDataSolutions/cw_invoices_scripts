@@ -6,7 +6,7 @@ from typing import Iterable
 import glob
 import os
 
-from solutions_toolkit.snapshots.utils import get_submissions, get_submission_labels, find_overlaps
+from solutions_toolkit.snapshots.utils import get_submissions, get_submission_labels, find_overlaps, filter_labels
 
 TARGET_COL = "target"
 LABEL_COL = "question"
@@ -173,6 +173,17 @@ class Snapshot:
             snapshot_df[ROW_INDEX_COL] = range(0, snapshot_df.shape[0])
 
         return cls(snapshot_df, label_col=label_col, **kwargs)
+
+    @classmethod
+    def split_classes(cls, snapshot, split_classes, new_label_col):
+        """
+        Create a new snapshot with only classes in split_classes
+        """
+        split_label_series = snapshot.label_df[snapshot.label_col].apply(filter_labels, args=(split_classes))
+        split_label_series.name = new_label_col
+        split_label_df = split_label_series.to_frame()
+        snapshot_df = pd.concat([split_label_df, snapshot.text_df], axis=1).reset_index()
+        return cls(snapshot_df, label_col=new_label_col)
 
 
 def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
