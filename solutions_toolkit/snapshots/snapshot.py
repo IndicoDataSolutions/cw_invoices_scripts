@@ -179,7 +179,7 @@ class Snapshot:
         """
         Create a new snapshot with only classes in split_classes
         """
-        split_label_series = snapshot.label_df[snapshot.label_col].apply(filter_labels, args=(split_classes))
+        split_label_series = snapshot.label_df[snapshot.label_col].apply(filter_labels, split_classes=split_classes)
         split_label_series.name = new_label_col
         split_label_df = split_label_series.to_frame()
         snapshot_df = pd.concat([split_label_df, snapshot.text_df], axis=1).reset_index()
