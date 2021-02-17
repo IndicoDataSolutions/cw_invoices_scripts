@@ -61,3 +61,5 @@ if __name__ == "__main__":
     workflow_upload = WorkflowUpload(config)
     pdf_filepaths = files_from_directory(config.document_input_dir, "*.pdf")
     submision_ids = workflow_upload.upload_to_workflow(pdf_filepaths, wait=config.wait)
+    print("Files have been submitted to workflow")
+    print("Files have been moved to UPLOADED_DIR")

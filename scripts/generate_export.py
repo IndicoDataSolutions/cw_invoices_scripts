@@ -1,12 +1,16 @@
 import os
 import sys
 import time
+from indico.client.client import IndicoClient
 import pandas as pd
 from collections import defaultdict
 from solutions_toolkit.auto_review import Reviewer, FieldConfiguration
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 from solutions_toolkit.indico_wrapper import IndicoWrapper
-
+from indico.queries import (
+    RetrieveStorageObject,
+        SubmissionResult
+)
 
 USAGE_STRING = (
     "USAGE: python3 generate_export path/to/configuration_file"
@@ -346,7 +350,7 @@ if __name__ == "__main__":
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
         full_dfs = []
-        for submission in submission_batch:
+        for submission in complete_submissions:
             page_infos, predictions = get_page_extractions(
                 indico_wrapper, submission, MODEL_NAME, post_review=post_review
             )
@@ -451,11 +455,28 @@ if __name__ == "__main__":
             ].apply(lambda x: x.ffill().bfill())
             output_df = output_df[col_order]
 
+            for cs in complete_submissions:
+                complete_filenames.append(str(cs.input_filename))
+
+            complete_filenames_df = pd.DataFrame(complete_filenames, columns=["filename"])
+        
+            for cs in complete_submissions:
+                sub_job = (IndicoClient.call(SubmissionResult(cs.id, wait=True)))
+                result = (IndicoClient.call(RetrieveStorageObject(sub_job.result)))
+                complete_revID.append(result.get('reviewer_id'))
+    
+            complete_revID_df = pd.DataFrame(complete_revID, columns=["Reviewer ID"])
+        
+            reviewer_filename_df = pd.concat([complete_filenames_df, complete_revID_df], axis=1)
+    
+            output_df = pd.merge(reviewer_filename_df, output_df,  on='filename', how='outer')
+            
             output_filepath = os.path.join(EXPORT_DIR, EXPORT_FILENAME)
             output_df.to_csv(output_filepath, index=False)
             print(f"Generated export {output_filepath}")
             total_processed = min(batch_end, total_submissions)
             print(f"Processed {total_processed}/ {total_submissions}")
+            print("An export file has been generated")
 
             if not DEBUG:
                 for sub in complete_submissions:
@@ -481,15 +502,14 @@ if __name__ == "__main__":
 
     exception_filenames_df = pd.DataFrame(exception_filenames, columns=["File Name"])
     exceptions_df = pd.concat([exception_filenames_df, exception_ids_df], axis=1)
-    # for es in exception_submissions:
-    #     sub_job = INDICO_CLIENT.call(SubmissionResult(es.id, wait=True))
-    #     result = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
-    #     exceptions_revID.append(result.get("reviewer_id"))
+    for es in exception_submissions:
+        sub_job = IndicoClient.call(SubmissionResult(es.id, wait=True))
+        result = IndicoClient.call(RetrieveStorageObject(sub_job.result))
+        exceptions_revID.append(result.get("reviewer_id"))
 
-    # exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
-    # exceptions_df = pd.concat(
-    #     [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
-    # )
+    exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
+    exceptions_df = pd.concat(
+        [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1)
 
     if not DEBUG:
         for sub in exception_submissions:
@@ -498,5 +518,5 @@ if __name__ == "__main__":
     # Exporting Exception files and their Submission IDs as a CSV
     exception_filepath = os.path.join(EXPORT_DIR, EXCEPTION_FILENAME)
     exceptions_df.to_csv(exception_filepath, index=False)
-    print(f"Generated export {exception_filepath}")
+    print(f"Generated exceptions {exception_filepath}")
     print("An exception file has been generated")
