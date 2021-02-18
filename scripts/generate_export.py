@@ -350,7 +350,7 @@ if __name__ == "__main__":
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
         full_dfs = []
-        for submission in complete_submissions:
+        for submission in submission_batch:
             page_infos, predictions = get_page_extractions(
                 indico_wrapper, submission, MODEL_NAME, post_review=post_review
             )
@@ -455,12 +455,12 @@ if __name__ == "__main__":
             ].apply(lambda x: x.ffill().bfill())
             output_df = output_df[col_order]
 
-            for cs in complete_submissions:
+            for cs in submission_batch:
                 complete_filenames.append(str(cs.input_filename))
 
             complete_filenames_df = pd.DataFrame(complete_filenames, columns=["filename"])
         
-            for cs in complete_submissions:
+            for cs in submission_batch:
                 sub_job = (IndicoClient.call(SubmissionResult(cs.id, wait=True)))
                 result = (IndicoClient.call(RetrieveStorageObject(sub_job.result)))
                 complete_revID.append(result.get('reviewer_id'))
@@ -479,7 +479,7 @@ if __name__ == "__main__":
             print("An export file has been generated")
 
             if not DEBUG:
-                for sub in complete_submissions:
+                for sub in submission_batch:
                     indico_wrapper.mark_retreived(sub)
 
         else:
