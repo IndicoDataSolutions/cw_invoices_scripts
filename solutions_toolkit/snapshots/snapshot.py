@@ -6,7 +6,12 @@ from typing import Iterable
 import glob
 import os
 
-from solutions_toolkit.snapshots.utils import get_submissions, get_submission_labels, find_overlaps, filter_labels
+from solutions_toolkit.snapshots.utils import (
+    get_submissions,
+    get_submission_labels,
+    find_overlaps,
+    filter_labels,
+)
 
 TARGET_COL = "target"
 LABEL_COL = "question"
@@ -101,7 +106,13 @@ class Snapshot:
 
     @classmethod
     def from_review_queue(
-        cls, client, dataset_export_df, model_name, workflow_id, label_col=LABEL_COL, **kwargs
+        cls,
+        client,
+        dataset_export_df,
+        model_name,
+        workflow_id,
+        label_col=LABEL_COL,
+        **kwargs
     ):
         """
         Generate a snapshot from all documents in the review queue
@@ -175,15 +186,25 @@ class Snapshot:
         return cls(snapshot_df, label_col=label_col, **kwargs)
 
     @classmethod
-    def split_classes(cls, snapshot, split_classes, new_label_col):
+    def split_classes(
+        cls, snapshot, split_classes, new_label_col, add_to_snapshot=False
+    ):
         """
         Create a new snapshot with only classes in split_classes
         """
-        split_label_series = snapshot.label_df[snapshot.label_col].apply(filter_labels, split_classes=split_classes)
-        split_label_series.name = new_label_col
-        split_label_df = split_label_series.to_frame()
-        snapshot_df = pd.concat([split_label_df, snapshot.text_df], axis=1).reset_index()
-        return cls(snapshot_df, label_col=new_label_col)
+        split_label_series = snapshot.label_df[snapshot.label_col].apply(
+            filter_labels, split_classes=split_classes
+        )
+        if add_to_snapshot:
+            snapshot.label_df[new_label_col] = split_label_series.values
+            return snapshot
+        else:
+            split_label_series.name = new_label_col
+            split_label_df = split_label_series.to_frame()
+            snapshot_df = pd.concat(
+                [split_label_df, snapshot.text_df], axis=1
+            ).reset_index()
+            return cls(snapshot_df, label_col=new_label_col)
 
 
 def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
@@ -193,7 +214,7 @@ def _merge_labels(snapshots, join="inner", label_col=LABEL_COL):
     label_dfs = [s.label_df for s in snapshots]
     labelset_cols = [s.label_col for s in snapshots]
     index_cols = snapshots[0].index_cols
-    
+
     label_df = pd.concat(label_dfs, axis=1, join=join)
     label_df[label_col] = None
 
@@ -236,4 +257,4 @@ if __name__ == "__main__":
     snapshot = Snapshot.from_csv(
         snapshot_filepath, label_col="labels", filename_col="filename"
     )
-    snapshot.get_label_list()
+    
