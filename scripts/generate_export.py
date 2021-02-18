@@ -7,14 +7,9 @@ from collections import defaultdict
 from solutions_toolkit.auto_review import Reviewer, FieldConfiguration
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 from solutions_toolkit.indico_wrapper import IndicoWrapper
-from indico.queries import (
-    RetrieveStorageObject,
-        SubmissionResult
-)
+from indico.queries import RetrieveStorageObject, SubmissionResult
 
-USAGE_STRING = (
-    "USAGE: python3 generate_export path/to/configuration_file"
-)
+USAGE_STRING = "USAGE: python3 generate_export path/to/configuration_file"
 
 
 def assign_confidences(results, model_name):
@@ -69,7 +64,9 @@ def get_page_extractions(indico_wrapper, submission, model_name, post_review=Fal
             predictions = None
         else:
             predictions = assign_confidences(results, model_name)
-    return page_infos, predictions
+
+    reviewer_id = result.get("reviewer_id")
+    return page_infos, predictions, reviewer_id
 
 
 def merge_page_tokens(pages):
@@ -314,8 +311,7 @@ if __name__ == "__main__":
     EXCEPTION_FILENAME = config.exception_filename
     DEBUG = config.debug
     STP = config.stp
-    
-    
+
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     COMPLETE_STATUS = "COMPLETE"
 
@@ -344,16 +340,17 @@ if __name__ == "__main__":
         batched_submissions = range(0, len(complete_submissions), BATCH_SIZE)
     else:
         batched_submissions = []
-        
+
     for batch_start in batched_submissions:
         batch_end = batch_start + BATCH_SIZE
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
         full_dfs = []
         for submission in submission_batch:
-            page_infos, predictions = get_page_extractions(
+            page_infos, predictions, reviewer_id = get_page_extractions(
                 indico_wrapper, submission, MODEL_NAME, post_review=post_review
             )
+            complete_revID.append(reviewer_id)
             if predictions:
                 # apply post processing functions
                 if POST_PROCESSING:
@@ -458,19 +455,20 @@ if __name__ == "__main__":
             for cs in submission_batch:
                 complete_filenames.append(str(cs.input_filename))
 
-            complete_filenames_df = pd.DataFrame(complete_filenames, columns=["filename"])
-        
-            for cs in submission_batch:
-                sub_job = (IndicoClient.call(SubmissionResult(cs.id, wait=True)))
-                result = (IndicoClient.call(RetrieveStorageObject(sub_job.result)))
-                complete_revID.append(result.get('reviewer_id'))
-    
+            complete_filenames_df = pd.DataFrame(
+                complete_filenames, columns=["filename"]
+            )
+
             complete_revID_df = pd.DataFrame(complete_revID, columns=["Reviewer ID"])
-        
-            reviewer_filename_df = pd.concat([complete_filenames_df, complete_revID_df], axis=1)
-    
-            output_df = pd.merge(reviewer_filename_df, output_df,  on='filename', how='outer')
-            
+
+            reviewer_filename_df = pd.concat(
+                [complete_filenames_df, complete_revID_df], axis=1
+            )
+
+            output_df = pd.merge(
+                reviewer_filename_df, output_df, on="filename", how="outer"
+            )
+
             output_filepath = os.path.join(EXPORT_DIR, EXPORT_FILENAME)
             output_df.to_csv(output_filepath, index=False)
             print(f"Generated export {output_filepath}")
@@ -509,7 +507,8 @@ if __name__ == "__main__":
 
     exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
     exceptions_df = pd.concat(
-        [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1)
+        [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
+    )
 
     if not DEBUG:
         for sub in exception_submissions:
