@@ -342,6 +342,8 @@ if __name__ == "__main__":
         print(f"Starting Batch {batch_num}")
         for submission in tqdm(submission_batch):
             try:
+                if batch_num == 0:
+                    raise ConnectionError
                 page_infos, predictions, reviewer_id = get_page_extractions(
                     indico_wrapper, submission, MODEL_NAME, post_review=post_review
                 )
@@ -433,52 +435,52 @@ if __name__ == "__main__":
                     indico_wrapper.mark_retreived(submission)
                 continue
 
-            if full_dfs:
-                output_df = pd.concat(full_dfs)
-                labels = DOC_KEY_FIELDS + PAGE_KEY_FIELDS + ROW_FIELDS
-                col_order = ["filename"]
-                pivot_val_cols = ["text", "confidence"]
-                for label in labels:
-                    for pivot_val_col in pivot_val_cols:
-                        col_order.append(f"{label} {pivot_val_col}")
+        if full_dfs:
+            output_df = pd.concat(full_dfs)
+            labels = DOC_KEY_FIELDS + PAGE_KEY_FIELDS + ROW_FIELDS
+            col_order = ["filename"]
+            pivot_val_cols = ["text", "confidence"]
+            for label in labels:
+                for pivot_val_col in pivot_val_cols:
+                    col_order.append(f"{label} {pivot_val_col}")
 
-                current_cols = set(output_df.columns)
-                missing_cols = list(set(col_order).difference(current_cols))
-                for missing_col in missing_cols:
-                    output_df[missing_col] = None
+            current_cols = set(output_df.columns)
+            missing_cols = list(set(col_order).difference(current_cols))
+            for missing_col in missing_cols:
+                output_df[missing_col] = None
 
-                doc_key_text_cols = [f"{col} text" for col in DOC_KEY_FIELDS]
-                doc_key_conf_cols = [f"{col} confidence" for col in DOC_KEY_FIELDS]
-                output_df.reset_index(drop=True, inplace=True)
-                output_df[doc_key_text_cols] = output_df.groupby(
-                    ["filename"], sort=False
-                )[doc_key_text_cols].apply(lambda x: x.ffill().bfill())
-                output_df[doc_key_conf_cols] = output_df.groupby(
-                    ["filename"], sort=False
-                )[doc_key_conf_cols].apply(lambda x: x.ffill().bfill())
-                output_df = output_df[col_order]
+            doc_key_text_cols = [f"{col} text" for col in DOC_KEY_FIELDS]
+            doc_key_conf_cols = [f"{col} confidence" for col in DOC_KEY_FIELDS]
+            output_df.reset_index(drop=True, inplace=True)
+            output_df[doc_key_text_cols] = output_df.groupby(
+                ["filename"], sort=False
+            )[doc_key_text_cols].apply(lambda x: x.ffill().bfill())
+            output_df[doc_key_conf_cols] = output_df.groupby(
+                ["filename"], sort=False
+            )[doc_key_conf_cols].apply(lambda x: x.ffill().bfill())
+            output_df = output_df[col_order]
 
-                reviewer_filename_df = pd.DataFrame(
-                    {"filename": complete_filenames, "Reviewer ID": complete_revID}
-                )
+            reviewer_filename_df = pd.DataFrame(
+                {"filename": complete_filenames, "Reviewer ID": complete_revID}
+            )
 
-                output_df = pd.merge(
-                    reviewer_filename_df, output_df, on="filename", how="outer"
-                )
+            output_df = pd.merge(
+                reviewer_filename_df, output_df, on="filename", how="outer"
+            )
 
-                output_filepath = os.path.join(EXPORT_DIR, EXPORT_FILENAME)
-                output_df.to_csv(output_filepath, index=False)
-                print(f"Generated export {output_filepath}")
-                total_processed = min(batch_end, total_submissions)
-                print(f"Processed {total_processed}/ {total_submissions}")
-                print("An export file has been generated")
+            output_filepath = os.path.join(EXPORT_DIR, EXPORT_FILENAME)
+            output_df.to_csv(output_filepath, index=False)
+            print(f"Generated export {output_filepath}")
+            total_processed = min(batch_end, total_submissions)
+            print(f"Processed {total_processed}/ {total_submissions}")
+            print("An export file has been generated")
 
-                if not DEBUG:
-                    for sub in submission_batch:
-                        indico_wrapper.mark_retreived(sub)
+            if not DEBUG:
+                for sub in submission_batch:
+                    indico_wrapper.mark_retreived(sub)
 
-            else:
-                print("No COMPLETE submissions to generate export")
+        else:
+            print("No COMPLETE submissions to generate export")
 
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     exception_submissions = indico_wrapper.get_submissions(
