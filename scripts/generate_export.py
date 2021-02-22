@@ -1,6 +1,7 @@
 import os
 import sys
-import time
+from tqdm import tqdm
+
 import pandas as pd
 from collections import defaultdict
 from solutions_toolkit.auto_review import Reviewer, FieldConfiguration
@@ -8,9 +9,7 @@ from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 from solutions_toolkit.indico_wrapper import IndicoWrapper
 
 
-USAGE_STRING = (
-    "USAGE: python3 generate_export path/to/configuration_file"
-)
+USAGE_STRING = "USAGE: python3 generate_export path/to/configuration_file"
 
 
 def assign_confidences(results, model_name):
@@ -65,7 +64,9 @@ def get_page_extractions(indico_wrapper, submission, model_name, post_review=Fal
             predictions = None
         else:
             predictions = assign_confidences(results, model_name)
-    return page_infos, predictions
+
+    reviewer_id = results.get("reviewer_id")
+    return page_infos, predictions, reviewer_id
 
 
 def merge_page_tokens(pages):
@@ -84,16 +85,9 @@ def filter_preds(predictions, label_set):
 
 def add_page_number(page_predictions, tokens):
     for pred in page_predictions:
-        if pred["start"]:
-            start, end = (
-                pred["start"] - 1,
-                pred["end"] + 1,
-            )
+        if pred.get("start", None) is not None:
             for token in tokens:
-                if (
-                    token["doc_offset"]["start"] >= start
-                    and token["doc_offset"]["end"] <= end
-                ):
+                if sequences_overlap(token["doc_offset"], pred):
                     pred["page_num"] = token["page_num"]
                     break
             else:
@@ -310,8 +304,7 @@ if __name__ == "__main__":
     EXCEPTION_FILENAME = config.exception_filename
     DEBUG = config.debug
     STP = config.stp
-    
-    
+
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     COMPLETE_STATUS = "COMPLETE"
 
@@ -340,91 +333,105 @@ if __name__ == "__main__":
         batched_submissions = range(0, len(complete_submissions), BATCH_SIZE)
     else:
         batched_submissions = []
-        
-    for batch_start in batched_submissions:
+
+    for batch_num, batch_start in enumerate(batched_submissions):
         batch_end = batch_start + BATCH_SIZE
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
         full_dfs = []
-        for submission in submission_batch:
-            page_infos, predictions = get_page_extractions(
-                indico_wrapper, submission, MODEL_NAME, post_review=post_review
-            )
-            if predictions:
-                # apply post processing functions
-                if POST_PROCESSING:
-                    inital_predictions = {MODEL_NAME: predictions}
-                    reviewer = Reviewer(inital_predictions, MODEL_NAME, field_config)
-                    reviewer.apply_reviews()
-                    predictions = reviewer.get_updated_predictions()[MODEL_NAME]
-
-                # first check for manually added preds, add them to exception queue
-                if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
-                    exception_ids.append(int(submission.id))
-                    exception_filenames.append(str(submission.input_filename))
-                    if not DEBUG:
-                        indico_wrapper.mark_retreived(submission)
-                    continue
-
-                tokens = merge_page_tokens(page_infos)
-                add_page_number(predictions, tokens)
-                doc_key_predictions = filter_preds(predictions, DOC_KEY_FIELDS)
-                page_key_predictions = filter_preds(predictions, PAGE_KEY_FIELDS)
-                row_predictions = filter_preds(predictions, ROW_FIELDS)
-
-                # this may need it's own function/ better abstraction
-                if doc_key_predictions:
-                    key_preds_vert_df = predictions_to_df(
-                        [submission], [doc_key_predictions]
-                    )
-                    top_conf_key_pred_df = get_top_pred_df(key_preds_vert_df)
-                    key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
-
-                if page_key_predictions:
-                    key_preds_vert_df = predictions_to_df(
-                        [submission], [page_key_predictions], page_num=True
-                    )
-                    top_conf_key_pred_df = get_top_pred_df(
-                        key_preds_vert_df, page_num=True
-                    )
-                    page_key_pred_df = vert_to_horizontal(
-                        top_conf_key_pred_df, page_num=True
-                    )
-
-                if row_predictions:
-                    line_item_df = align_rows(
-                        row_predictions, tokens, submission.input_filename
-                    )
-
-                # TODO: this logic is gross
-                if doc_key_predictions:
-                    if row_predictions and page_key_predictions:
-                        full_df = key_pred_df.merge(page_key_pred_df, how="outer")
-                        full_df = full_df.merge(
-                            line_item_df, on=["filename", "page_num"], how="outer"
+        print(f"Starting Batch {batch_num}")
+        for submission in tqdm(submission_batch):
+            try:
+                page_infos, predictions, reviewer_id = get_page_extractions(
+                    indico_wrapper, submission, MODEL_NAME, post_review=post_review
+                )
+                complete_revID.append(reviewer_id)
+                complete_filenames.append(submission.input_filename)
+                if predictions:
+                    # apply post processing functions
+                    if POST_PROCESSING:
+                        inital_predictions = {MODEL_NAME: predictions}
+                        reviewer = Reviewer(
+                            inital_predictions, MODEL_NAME, field_config
                         )
-                    else:
-                        if row_predictions:
-                            full_df = key_pred_df.merge(line_item_df, how="outer")
-                        elif page_key_predictions:
-                            full_df = key_pred_df.merge(page_key_pred_df)
-                        else:
-                            full_df = key_pred_df
+                        reviewer.apply_reviews()
+                        predictions = reviewer.get_updated_predictions()[MODEL_NAME]
 
-                elif row_predictions:
+                    # first check for manually added preds, add them to exception queue
+                    if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
+                        exception_ids.append(int(submission.id))
+                        exception_filenames.append(str(submission.input_filename))
+                        if not DEBUG:
+                            indico_wrapper.mark_retreived(submission)
+                        continue
+
+                    tokens = merge_page_tokens(page_infos)
+                    add_page_number(predictions, tokens)
+                    doc_key_predictions = filter_preds(predictions, DOC_KEY_FIELDS)
+                    page_key_predictions = filter_preds(predictions, PAGE_KEY_FIELDS)
+                    row_predictions = filter_preds(predictions, ROW_FIELDS)
+
+                    # this may need it's own function/ better abstraction
+                    if doc_key_predictions:
+                        key_preds_vert_df = predictions_to_df(
+                            [submission], [doc_key_predictions]
+                        )
+                        top_conf_key_pred_df = get_top_pred_df(key_preds_vert_df)
+                        key_pred_df = vert_to_horizontal(top_conf_key_pred_df)
+
                     if page_key_predictions:
-                        full_df = line_item_df.merge(
-                            page_key_pred_df, on=["filename", "page_num"], how="outer"
+                        key_preds_vert_df = predictions_to_df(
+                            [submission], [page_key_predictions], page_num=True
                         )
+                        top_conf_key_pred_df = get_top_pred_df(
+                            key_preds_vert_df, page_num=True
+                        )
+                        page_key_pred_df = vert_to_horizontal(
+                            top_conf_key_pred_df, page_num=True
+                        )
+
+                    if row_predictions:
+                        line_item_df = align_rows(
+                            row_predictions, tokens, submission.input_filename
+                        )
+
+                    # TODO: this logic is gross
+                    if doc_key_predictions:
+                        if row_predictions and page_key_predictions:
+                            full_df = key_pred_df.merge(page_key_pred_df, how="outer")
+                            full_df = full_df.merge(
+                                line_item_df, on=["filename", "page_num"], how="outer"
+                            )
+                        else:
+                            if row_predictions:
+                                full_df = key_pred_df.merge(line_item_df, how="outer")
+                            elif page_key_predictions:
+                                full_df = key_pred_df.merge(page_key_pred_df)
+                            else:
+                                full_df = key_pred_df
+
+                    elif row_predictions:
+                        if page_key_predictions:
+                            full_df = line_item_df.merge(
+                                page_key_pred_df,
+                                on=["filename", "page_num"],
+                                how="outer",
+                            )
+                        else:
+                            full_df = line_item_df
+
+                    elif doc_key_predictions:
+                        full_df = page_key_pred_df
+
                     else:
-                        full_df = line_item_df
-
-                elif doc_key_predictions:
-                    full_df = page_key_pred_df
-
-                else:
-                    continue
-                full_dfs.append(full_df)
+                        continue
+                    full_dfs.append(full_df)
+            except ConnectionError:
+                exception_ids.append(int(submission.id))
+                exception_filenames.append(str(submission.input_filename))
+                if not DEBUG:
+                    indico_wrapper.mark_retreived(submission)
+                continue
 
         if full_dfs:
             output_df = pd.concat(full_dfs)
@@ -443,22 +450,31 @@ if __name__ == "__main__":
             doc_key_text_cols = [f"{col} text" for col in DOC_KEY_FIELDS]
             doc_key_conf_cols = [f"{col} confidence" for col in DOC_KEY_FIELDS]
             output_df.reset_index(drop=True, inplace=True)
-            output_df[doc_key_text_cols] = output_df.groupby(["filename"], sort=False)[
-                doc_key_text_cols
-            ].apply(lambda x: x.ffill().bfill())
-            output_df[doc_key_conf_cols] = output_df.groupby(["filename"], sort=False)[
-                doc_key_conf_cols
-            ].apply(lambda x: x.ffill().bfill())
+            output_df[doc_key_text_cols] = output_df.groupby(
+                ["filename"], sort=False
+            )[doc_key_text_cols].apply(lambda x: x.ffill().bfill())
+            output_df[doc_key_conf_cols] = output_df.groupby(
+                ["filename"], sort=False
+            )[doc_key_conf_cols].apply(lambda x: x.ffill().bfill())
             output_df = output_df[col_order]
+
+            reviewer_filename_df = pd.DataFrame(
+                {"filename": complete_filenames, "Reviewer ID": complete_revID}
+            )
+
+            output_df = pd.merge(
+                reviewer_filename_df, output_df, on="filename", how="outer"
+            )
 
             output_filepath = os.path.join(EXPORT_DIR, EXPORT_FILENAME)
             output_df.to_csv(output_filepath, index=False)
             print(f"Generated export {output_filepath}")
             total_processed = min(batch_end, total_submissions)
             print(f"Processed {total_processed}/ {total_submissions}")
+            print("An export file has been generated")
 
             if not DEBUG:
-                for sub in complete_submissions:
+                for sub in submission_batch:
                     indico_wrapper.mark_retreived(sub)
 
         else:
@@ -476,20 +492,19 @@ if __name__ == "__main__":
 
     exception_ids_df = pd.DataFrame(exception_ids, columns=["Submission ID"])
 
-    for es in exception_submissions:
-        exception_filenames.append(str(es.input_filename))
+    for exception_submission in exception_submissions:
+        exception_filenames.append(str(exception_submission.input_filename))
 
     exception_filenames_df = pd.DataFrame(exception_filenames, columns=["File Name"])
     exceptions_df = pd.concat([exception_filenames_df, exception_ids_df], axis=1)
-    # for es in exception_submissions:
-    #     sub_job = INDICO_CLIENT.call(SubmissionResult(es.id, wait=True))
-    #     result = INDICO_CLIENT.call(RetrieveStorageObject(sub_job.result))
-    #     exceptions_revID.append(result.get("reviewer_id"))
+    for exception_submission in exception_submissions:
+        result = indico_wrapper.get_submission_results(exception_submission)
+        exceptions_revID.append(result.get("reviewer_id"))
 
-    # exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
-    # exceptions_df = pd.concat(
-    #     [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
-    # )
+    exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
+    exceptions_df = pd.concat(
+        [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
+    )
 
     if not DEBUG:
         for sub in exception_submissions:
@@ -498,5 +513,5 @@ if __name__ == "__main__":
     # Exporting Exception files and their Submission IDs as a CSV
     exception_filepath = os.path.join(EXPORT_DIR, EXCEPTION_FILENAME)
     exceptions_df.to_csv(exception_filepath, index=False)
-    print(f"Generated export {exception_filepath}")
+    print(f"Generated exceptions {exception_filepath}")
     print("An exception file has been generated")
