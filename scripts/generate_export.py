@@ -342,8 +342,6 @@ if __name__ == "__main__":
         print(f"Starting Batch {batch_num}")
         for submission in tqdm(submission_batch):
             try:
-                if batch_num == 0:
-                    raise ConnectionError
                 page_infos, predictions, reviewer_id = get_page_extractions(
                     indico_wrapper, submission, MODEL_NAME, post_review=post_review
                 )
