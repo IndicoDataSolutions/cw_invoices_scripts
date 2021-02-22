@@ -36,12 +36,15 @@ def reject_by_character_length(prediction, length_threshold=3):
     return prediction
 
 
-def split_merged_values(predictions):
+def split_merged_values(predictions, split_filter=None):
     updated_predictions = []
     for pred in predictions:
         merged_text = pred["text"]
         start = pred["start"]
-        split_text = merged_text.split()
+        if split_filter:
+            split_text = merged_text.split(split_filter)
+        else:
+            split_text = merged_text.split()
         if len(split_text) == 1 or pred.get("rejected"):
             updated_predictions.append(pred)
             continue

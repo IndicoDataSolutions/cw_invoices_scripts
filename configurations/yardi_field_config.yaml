@@ -36,6 +36,7 @@ FIELD_CONFIG:
     -
       function: split_merged_values
       kwargs: 
+        split_filter: "\n"
       prediction_set: all
   Check Number:
     -
@@ -51,6 +52,7 @@ FIELD_CONFIG:
     -
       function: split_merged_values
       kwargs: 
+        split_filter: "\n"
       prediction_set: all
   Withdrawal Amount:
     -
@@ -61,6 +63,7 @@ FIELD_CONFIG:
     -
       function: split_merged_values
       kwargs: 
+        split_filter: "\n"
       prediction_set: all
   
     
