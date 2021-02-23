@@ -6,6 +6,7 @@ STP.
 
 import sys
 import os
+from tqdm import tqdm 
 
 from solutions_toolkit.uipath_block_scripts.utils import files_from_directory, move_file
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
@@ -27,7 +28,7 @@ class WorkflowUpload:
         submission_ids = []
         total_uploaded = len(pdf_filepaths)
         batch_count = 0
-        for batch_start in range(0, len(pdf_filepaths), self.batch_size):
+        for batch_start in tqdm(range(0, len(pdf_filepaths), self.batch_size)):
             batch_end = batch_start + self.batch_size
             pdf_batch = pdf_filepaths[batch_start:batch_end]
 
