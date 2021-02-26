@@ -33,7 +33,7 @@ class IndicoWrapper:
         )
         self.indico_client = IndicoClient(config=my_config)
 
-    def get_submission(self, workflow_id, submission_id):
+    def get_submission(self, submission_id):
         return self.indico_client.call(GetSubmission(submission_id))
 
     def get_submissions(self, workflow_id, submission_status=None, retrieved_flag=None):
