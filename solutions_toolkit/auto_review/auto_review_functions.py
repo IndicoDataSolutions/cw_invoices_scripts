@@ -1,8 +1,13 @@
-def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50):
-    if prediction["confidence"][label] < conf_threshold:
-        prediction["rejected"] = True
-    return prediction
+ACCEPTED = "accepted"
+REJECTED = "rejected"
 
+def reject_by_confidence(prediction, label="asdf", conf_threshold=0.50):
+    if prediction.get(REJECTED):
+        return prediction
+    if prediction["confidence"][label] < conf_threshold:
+        prediction[REJECTED] = True
+        _ = prediction.pop(ACCEPTED, None)
+    return prediction
 
 def remove_by_confidence(predictions, label="asdf", conf_threshold=0.50):
     updated_predictions = []
@@ -11,30 +16,43 @@ def remove_by_confidence(predictions, label="asdf", conf_threshold=0.50):
             updated_predictions.append(prediction)
     return updated_predictions
 
-
 def accept_by_confidence(prediction, label="asdf", conf_threshold=0.98):
-    if prediction["confidence"][label] > conf_threshold:
-        prediction["accepted"] = True
+    if prediction.get(REJECTED) is None:          
+        if prediction["confidence"][label] > conf_threshold:
+            prediction[ACCEPTED] = True
     return prediction
 
 
 def accept_all_by_confidence(predictions, label="asdf", conf_threshold=0.98):
     pred_values = set()
+    
     for pred in predictions:
-        if pred["confidence"][label] < conf_threshold:
-            return predictions
-        pred_values.add(pred["text"])
+        if pred.get(REJECTED) is None:                  
+            if pred["confidence"][label] > conf_threshold:
+                pred_values.add(pred["text"])
+                           
     if len(pred_values) == 1:
+        text = pred_values.pop()
         for pred in predictions:
-            pred["accepted"] = True
+            if pred["text"] == text:
+                if not pred["confidence"][label] > conf_threshold:
+                    return predictions
+
+        for pred in predictions:
+            if pred["text"] == text:
+                pred[ACCEPTED] = True
     return predictions
 
 
-def reject_by_character_length(prediction, length_threshold=3):
-    if len(prediction["text"]) < length_threshold:
-        prediction["rejected"] = True
+def reject_by_min_character_length(prediction, min_length_threshold=3):
+    if len(prediction["text"]) < min_length_threshold:
+        prediction[REJECTED] = True
     return prediction
 
+def reject_by_max_character_length(prediction, max_length_threshold=10):
+    if len(prediction["text"]) > max_length_threshold:
+        prediction[REJECTED] = True
+    return prediction
 
 def split_merged_values(predictions, split_filter=None):
     updated_predictions = []
