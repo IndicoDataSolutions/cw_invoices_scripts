@@ -1,0 +1,170 @@
+
+# Field config configures the auto review functions that will apply to each class
+# in a document's prediction
+
+# FIELD_CONFIG:
+#   Class 1:
+#     - <----------- Please note this hyphen, it's important so this gets read a list
+#       function: Function 1
+#       kwargs: 
+#       prediction_set: all
+#     -     
+#       function: Function 2
+#       kwargs: 
+#            kwarg1: asdf
+#            kwarg2: asdfas
+#       prediction_set: all
+
+#   Class 2:
+#     -
+#       function: Function 3
+#       kwargs: 
+#           kwarg1: asdf
+#           kwarg2: asdfd
+#       prediction_set: all
+
+# Note that the functions you apply need to have an appropriate mapping in
+# the REVIEWERS dictionary in reviewer.py
+
+FIELD_CONFIG:
+  Remit to Address (Street):
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Remit to Address (Street)"
+          conf_threshold: 0.98
+      prediction_set: all
+    
+  Remit to Address (City):
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Remit to Address (City)"
+          conf_threshold: 0.98
+      prediction_set: all
+  
+  Remit to Address (State):
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Remit to Address (State)"
+          conf_threshold: 0.98
+      prediction_set: all
+  
+  Remit to Address (Zip Code):
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Remit to Address (Zip Code)"
+          conf_threshold: 0.98
+      prediction_set: all
+  
+  Supplier Name:
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 3
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Supplier Name"
+          conf_threshold: 0.5
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Supplier Name"
+          conf_threshold: 0.98
+      prediction_set: all
+  
+  Currency:
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Currency"
+          conf_threshold: 0.5
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Currency"
+          conf_threshold: 0.98
+      prediction_set: single
+
+  "PO #":
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 3
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "PO #"
+          conf_threshold: 0.5
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "PO #"
+          conf_threshold: 0.98
+      prediction_set: all
+
+  Company Name:
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 4
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Company Name"
+          conf_threshold: 0.5
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Company Name"
+          conf_threshold: 0.98
+      prediction_set: all
+
+  Invoice Number:
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 3
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Invoice Number"
+          conf_threshold: 0.5
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Invoice Number"
+          conf_threshold: 0.98
+      prediction_set: all    
+  
+  Invoice Date:
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 6
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Invoice Date"
+          conf_threshold: 0.5
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Invoice Date"
+          conf_threshold: 0.98
+      prediction_set: all
+   

@@ -1,15 +1,16 @@
 import os
 import sys
+from indico.client.client import IndicoClient
 from tqdm import tqdm
 
 import pandas as pd
 from collections import defaultdict
-from solutions_toolkit.auto_review import Reviewer, FieldConfiguration
+# from solutions_toolkit.auto_review import Reviewer, FieldConfiguration
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 from solutions_toolkit.indico_wrapper import IndicoWrapper
 
 
-USAGE_STRING = "USAGE: python3 generate_export path/to/configuration_file"
+USAGE_STRING = "USAGE: C:\\Users\\Gnana Peddi\\Documents\\Python Scripts\\configuration files\\Controllership_config_dev.yaml"
 
 
 def assign_confidences(results, model_name):
@@ -32,7 +33,7 @@ def assign_confidences(results, model_name):
     return preds_final
 
 
-def get_page_extractions(indico_wrapper, submission, model_name, post_review=False):
+def get_page_extractions(indico_wrapper, submission, model_name, post_review=True):
     """
     Return predictions and page info for a submission
     post_review is a flag to select either the final reviewed values
@@ -361,6 +362,7 @@ if __name__ == "__main__":
                     if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
                         exception_ids.append(int(submission.id))
                         exception_filenames.append(str(submission.input_filename))
+                        exceptions_revID.append(str(reviewer_id))
                         if not DEBUG:
                             indico_wrapper.mark_retreived(submission)
                         continue
@@ -489,21 +491,18 @@ if __name__ == "__main__":
 
     for es in exception_submissions:
         exception_ids.append(int(es.id))
-
-    exception_ids_df = pd.DataFrame(exception_ids, columns=["Submission ID"])
-
-    for exception_submission in exception_submissions:
-        exception_filenames.append(str(exception_submission.input_filename))
-
-    exception_filenames_df = pd.DataFrame(exception_filenames, columns=["File Name"])
-    exceptions_df = pd.concat([exception_filenames_df, exception_ids_df], axis=1)
-    for exception_submission in exception_submissions:
-        result = indico_wrapper.get_submission_results(exception_submission)
+        print(exception_ids)
+        exception_filenames.append(str(es.input_filename))
+        print(exception_filenames)
+        result = indico_wrapper.get_submission_results(es)
         exceptions_revID.append(result.get("reviewer_id"))
-
-    exceptions_revID_df = pd.DataFrame(exceptions_revID, columns=["Reviewer ID"])
-    exceptions_df = pd.concat(
-        [exception_ids_df, exception_filenames_df, exceptions_revID_df], axis=1
+    
+    exceptions_df = pd.DataFrame(
+        {
+            "Submission ID": exception_ids,
+            "File Name": exception_filenames,
+            "Reviewer ID": exceptions_revID,
+        }
     )
 
     if not DEBUG:
