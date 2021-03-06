@@ -33,3 +33,4 @@ if __name__ == "__main__":
         # Note: this is a breaking call because we update the storage object
         # need to be careful with handling this
         job = indico_wrapper.submit_updated_review(submission, updated_predictions)
+    print("Auto Review has been applied")
