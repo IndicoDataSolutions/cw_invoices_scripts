@@ -1,6 +1,5 @@
 import os
 import sys
-from indico.client.client import IndicoClient
 from tqdm import tqdm
 
 import pandas as pd
@@ -10,7 +9,7 @@ from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 from solutions_toolkit.indico_wrapper import IndicoWrapper
 
 
-USAGE_STRING = "python3 generate_export path/to/configuration_file"
+USAGE_STRING = "USAGE: python3 generate_export path/to/configuration_file"
 
 
 def assign_confidences(results, model_name):
