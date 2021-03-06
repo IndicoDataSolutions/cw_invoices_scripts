@@ -1,0 +1,260 @@
+
+# Field config configures the auto review functions that will apply to each class
+# in a document's prediction
+
+# FIELD_CONFIG:
+#   Class 1:
+#     - <----------- Please note this hyphen, it's important so this gets read a list
+#       function: Function 1
+#       kwargs: 
+#       prediction_set: all
+#     -     
+#       function: Function 2
+#       kwargs: 
+#            kwarg1: asdf
+#            kwarg2: asdfas
+#       prediction_set: all
+
+#   Class 2:
+#     -
+#       function: Function 3
+#       kwargs: 
+#           kwarg1: asdf
+#           kwarg2: asdfd
+#       prediction_set: all
+
+# Note that the functions you apply need to have an appropriate mapping in
+# the REVIEWERS dictionary in reviewer.py
+
+FIELD_CONFIG:
+  Account Number:
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Account Number"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Account Number"
+          conf_threshold: 0.98
+      prediction_set: all
+  
+  Opening Balance:
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Opening Balance"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Opening Balance"
+          conf_threshold: 0.98
+      prediction_set: all
+
+  Ending Balance:
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Ending Balance"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Ending Balance"
+          conf_threshold: 0.98
+      prediction_set: all
+
+  Ending Date:
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Ending Date"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_all_by_confidence
+      kwargs:
+          label: "Ending Date"
+          conf_threshold: 0.98
+      prediction_set: all
+
+  Deposit Date:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 8
+      prediction_set: single
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 4
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Deposit Date"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Deposit Date"
+          conf_threshold: 0.98
+      prediction_set: single
+
+  Deposit Amount:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 15
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Deposit Amount"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Deposit Amount"
+          conf_threshold: 0.98
+      prediction_set: single
+
+  Withdrawal Amount:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 15
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Withdrawal Amount"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Withdrawal Amount"
+          conf_threshold: 0.98
+      prediction_set: single
+  
+  Withdrawal Date:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 8
+      prediction_set: single
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 4
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Withdrawal Date"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Withdrawal Date"
+          conf_threshold: 0.98
+      prediction_set: single
+    
+  Check Date:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 8
+      prediction_set: single
+    -
+      function: reject_by_min_character_length
+      kwargs: 
+          min_length_threshold: 4
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Check Date"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Check Date"
+          conf_threshold: 0.98
+      prediction_set: single
+    
+  Check Number:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 10
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Check Date"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Check Date"
+          conf_threshold: 0.98
+      prediction_set: single
+
+  Check Amount:
+    -
+      function: split_merged_values
+      kwargs: 
+      prediction_set: all
+    -
+      function: reject_by_max_character_length
+      kwargs: 
+          max_length_threshold: 15
+      prediction_set: single
+    -
+      function: reject_by_confidence
+      kwargs: 
+          label: "Check Amount"
+          conf_threshold: 0.55
+      prediction_set: single
+    -
+      function: accept_by_confidence
+      kwargs:
+          label: "Check Amount"
+          conf_threshold: 0.98
+      prediction_set: single
