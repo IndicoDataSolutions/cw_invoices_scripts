@@ -332,13 +332,14 @@ if __name__ == "__main__":
         batched_submissions = range(0, len(complete_submissions), BATCH_SIZE)
     else:
         batched_submissions = []
+        print("No COMPLETE submissions to generate export")
 
     for batch_num, batch_start in enumerate(batched_submissions):
         batch_end = batch_start + BATCH_SIZE
         submission_batch = complete_submissions[batch_start:batch_end]
         # FULL WORK FLOW
         full_dfs = []
-        print(f"Starting Batch {batch_num}")
+        print(f"Starting Batch {batch_num+1}")
         for submission in tqdm(submission_batch):
             try:
                 page_infos, predictions, reviewer_id = get_page_extractions(
@@ -476,10 +477,7 @@ if __name__ == "__main__":
             if not DEBUG:
                 for sub in submission_batch:
                     indico_wrapper.mark_retreived(sub)
-
-        else:
-            print("No COMPLETE submissions to generate export")
-
+        
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     exception_submissions = indico_wrapper.get_submissions(
         WORKFLOW_ID, EXCEPTION_STATUS, retrieved
