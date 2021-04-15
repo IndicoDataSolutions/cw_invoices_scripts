@@ -14,7 +14,7 @@ from indico.queries import (
     DownloadExport
 )
 from indico import IndicoClient, IndicoConfig
-
+from .decorators import retry_request
 
 class IndicoWrapper:
     """
@@ -33,9 +33,11 @@ class IndicoWrapper:
         )
         self.indico_client = IndicoClient(config=my_config)
 
+    @retry_request
     def get_submission(self, submission_id):
         return self.indico_client.call(GetSubmission(submission_id))
-
+    
+    @retry_request
     def get_submissions(self, workflow_id, submission_status=None, retrieved_flag=None):
         sub_filter = SubmissionFilter(
             status=submission_status, retrieved=retrieved_flag
@@ -45,12 +47,15 @@ class IndicoWrapper:
         )
         return complete_submissions
 
+    @retry_request
     def get_workflow_output(self, submission):
         return self.indico_client.call(RetrieveStorageObject(submission.result_file))
 
+    @retry_request
     def get_storage_object(self, storage_url):
         return self.indico_client.call(RetrieveStorageObject(storage_url))
 
+    @retry_request
     def get_submission_results(self, submission):
         sub_job = self.indico_client.call(SubmissionResult(submission.id, wait=True))
         results = self.get_storage_object(sub_job.result)
@@ -74,6 +79,7 @@ class IndicoWrapper:
             WaitForSubmissions(submission_ids=submission_ids, timeout=timeout)
         )
 
+    @retry_request
     def mark_retreived(self, submission):
         self.indico_client.call(UpdateSubmission(submission.id, retrieved=True))
 
