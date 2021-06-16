@@ -27,7 +27,7 @@ class ExportConfiguration(Configuration):
         self.debug = self.get_key("DEBUG")
         self.export_filename = self.get_key("EXPORT_FILENAME")
         self.exception_filename = self.get_key("EXCEPTION_FILENAME")
-
+        self.submissions_csv = self.get_key("SUBMISSIONS_CSV")
     # TODO: this check needs to go layers deep
     def get_key(self, key):
         try:
