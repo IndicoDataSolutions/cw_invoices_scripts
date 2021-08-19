@@ -1,3 +1,4 @@
+import re
 ACCEPTED = "accepted"
 REJECTED = "rejected"
 
@@ -86,3 +87,24 @@ def split_merged_values(predictions, split_filter=None):
             }
             updated_predictions.append(split_val_pred_dict)
     return updated_predictions
+
+def fix_dates(date):
+    backup_regex = r"^(?P<month>\d)[.\/1i](?P<day>\d{1,2})[.\/1i](?P<year>\d\d\d\d)$"
+    main_regex = r"^(?P<month>\d{1,2})[.\/1i](?P<day>\d{1,2})[.\/1i](?P<year>\d\d\d\d)$"
+    date_match = re.search(main_regex, date)
+    if date_match:
+        backup_match = re.search(backup_regex, date)
+        # backup match matches something but it's not the same as main match it's because it's something ambiguous like 1111/2020
+        if backup_match is None or (backup_match.group("month") == date_match.group("month") and backup_match.group("day") == date_match.group("day")):
+            year = date_match.group('year')
+            month = date_match.group('month')
+            day = date_match.group('day')
+            date = f"{month}/{day}/{year}"
+    return date
+
+def review_issue_dates(predictions):
+    for pred in predictions:
+        correct_date = fix_dates(pred["text"])
+        if pred["text"] != correct_date:
+            pred["text"] = correct_date
+    return predictions
