@@ -1,13 +1,14 @@
 from collections import defaultdict
 
-from solutions_toolkit.auto_review.auto_review_functions import (
+from auto_review_functions import (
     accept_by_confidence,
     reject_by_confidence,
     reject_by_min_character_length,
     reject_by_max_character_length,
     accept_all_by_confidence,
     split_merged_values,
-    remove_by_confidence
+    remove_by_confidence,
+    review_issue_dates,
 )
 
 
@@ -19,6 +20,7 @@ REVIEWERS = {
     "accept_all_by_confidence": accept_all_by_confidence,
     "split_merged_values": split_merged_values,
     "remove_by_confidence": remove_by_confidence,
+    "review_issue_dates": review_issue_dates,
 }
 
 
@@ -41,7 +43,7 @@ class Reviewer:
             for fn_config in fn_configs:
                 fn_name = fn_config["function"]
                 review_fn = REVIEWERS[fn_name]
-                kwargs = fn_config["kwargs"] if fn_config["kwargs"] else {}
+                kwargs = fn_config["kwargs"]
                 if fn_config["prediction_set"] == "single":
                     updated_predictions = []
                     for pred in self.prediction_label_map[label]:
