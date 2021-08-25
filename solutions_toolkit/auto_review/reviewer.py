@@ -8,7 +8,8 @@ from solutions_toolkit.auto_review.auto_review_functions import (
     accept_all_by_confidence,
     split_merged_values,
     remove_by_confidence,
-    review_issue_dates
+    review_issue_dates,
+    fix_amounts,
 )
 
 
@@ -20,7 +21,8 @@ REVIEWERS = {
     "accept_all_by_confidence": accept_all_by_confidence,
     "split_merged_values": split_merged_values,
     "remove_by_confidence": remove_by_confidence,
-    "review_issue_dates": review_issue_dates
+    "review_issue_dates": review_issue_dates,
+    "fix_amounts": fix_amounts
 }
 
 
