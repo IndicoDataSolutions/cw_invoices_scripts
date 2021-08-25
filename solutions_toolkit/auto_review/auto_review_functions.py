@@ -108,3 +108,13 @@ def review_issue_dates(predictions):
         if pred["text"] != correct_date:
             pred["text"] = correct_date
     return predictions
+
+def fix_amounts(predictions):
+    for pred in predictions:
+        try:
+            if (((("," in pred["text"]) and ("." in pred["text"])) and (pred["text"].index(',') > pred["text"].index('.'))) or((("," in pred["text"]) and ("." not in pred["text"])) and (pred["text"].index(',') == len(pred["text"])-3))):
+                pred["text"] = str(pred["text"]).replace(".",",") 
+                size = len(pred["text"])
+                pred["text"] = pred["text"][:size - 3] + "." + pred["text"][size -2:]
+        except: continue                
+    return predictions
