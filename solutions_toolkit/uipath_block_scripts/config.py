@@ -28,6 +28,8 @@ class ExportConfiguration(Configuration):
         self.export_filename = self.get_key("EXPORT_FILENAME")
         self.exception_filename = self.get_key("EXCEPTION_FILENAME")
         self.submissions_csv = self.get_key("SUBMISSIONS_CSV")
+        self.log_file_dir = self.get_key("LOG_FILE_DIR")
+        self.log_filename = self.get_key("LOG_FILENAME")
     # TODO: this check needs to go layers deep
     def get_key(self, key):
         try:
