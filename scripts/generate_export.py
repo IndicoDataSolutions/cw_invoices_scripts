@@ -1,13 +1,14 @@
 import os
 import sys
 from tqdm import tqdm
-
+from time import sleep
 import pandas as pd
 from collections import defaultdict
 from solutions_toolkit.auto_review import Reviewer, FieldConfiguration
 from solutions_toolkit.uipath_block_scripts.config import ExportConfiguration
 from solutions_toolkit.indico_wrapper import IndicoWrapper
-
+import datetime
+import logging
 
 USAGE_STRING = "USAGE: python3 generate_export path/to/configuration_file"
 
@@ -22,14 +23,29 @@ def assign_confidences(results, model_name):
     preds_final = results["results"]["document"]["results"][model_name]["final"]
 
     for pred_final in preds_final:
-        final_start = pred_final["start"]
-        final_end = pred_final["end"]
+
         for pred_pre_review in preds_pre_review:
-            pre_start = pred_pre_review["start"]
-            pre_end = pred_pre_review["end"]
-            if final_start == pre_start and final_end == pre_end:
+            if labels_equal(pred_pre_review, pred_final):
                 pred_final["confidence"] = pred_pre_review["confidence"]
     return preds_final
+
+def labels_equal(label_1, label_2):
+    label_1_start = label_1["start"]
+    label_2_start = label_2["start"]
+    if not label_1_start == label_2_start:
+        return False
+
+    label_1_end = label_1["end"]
+    label_2_end = label_2["end"]
+    if not label_1_end == label_2_end:
+        return False
+
+    label_1_class = label_1["label"]
+    label_2_class = label_2["label"]
+    if not label_1_class == label_2_class:
+        return False
+
+    return True
 
 def get_page_extractions(indico_wrapper, submission, model_name, post_review=False):
     """
@@ -257,21 +273,15 @@ def contains_added_text(predictions, fields):
     return False
 
 
-def sequences_overlap(true_seq, pred_seq):
+def sequences_overlap(x: dict, y: dict) -> bool:
     """
     Boolean return value indicates whether or not seqs overlap
     """
-    start_contained = (
-        pred_seq["start"] < true_seq["end"] and pred_seq["start"] >= true_seq["start"]
-    )
-    end_contained = (
-        pred_seq["end"] > true_seq["start"] and pred_seq["end"] <= true_seq["end"]
-    )
-    return start_contained or end_contained
+    return x["start"] < y["end"] and y["start"] < x["end"]
 
 
 if __name__ == "__main__":
-
+    begin_time = datetime.datetime.now()
     if len(sys.argv) != 2:
         print(USAGE_STRING)
         sys.exit()
@@ -303,7 +313,8 @@ if __name__ == "__main__":
     EXCEPTION_FILENAME = config.exception_filename
     DEBUG = config.debug
     STP = config.stp
-
+    LOG_FILE_DIR = config.log_file_dir
+    LOG_FILENAME = config.log_filename
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
     COMPLETE_STATUS = "COMPLETE"
 
@@ -312,27 +323,39 @@ if __name__ == "__main__":
     post_review = not STP
     exception_ids = []
     exception_filenames = []
+    complete_ids = []
     complete_filenames = []
     sub_job = []
     result = []
     complete_revID = []
     exceptions_revID = []
 
+    timestamp = datetime.datetime.now().strftime("%m_%d_%Y-%I_%M_%S_%p")
+    logging.basicConfig(level=logging.WARNING,
+                    format='%(asctime)s %(message)s',
+                    datefmt='%m-%d %H:%M:%S',
+                    filename=f'{LOG_FILE_DIR}\\{LOG_FILENAME}_{timestamp}.log',
+                    filemode='w', force=True)
+    logging.warning("Getting the list of reviewed submissions from Indico")
+
     # To export COMPLETE submissions
     complete_submissions = indico_wrapper.get_submissions(
         WORKFLOW_ID, COMPLETE_STATUS, retrieved
     )
-
+    logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds")
     total_submissions = len(complete_submissions)
+    logging.warning(f"{total_submissions} submissions have been obtained")
     if BATCH_SIZE is None:
         BATCH_SIZE = total_submissions
 
     print(f"Starting processing of {total_submissions} submissions")
+    logging.warning(f"Starting processing of {total_submissions} submissions")
     if complete_submissions:
         batched_submissions = range(0, len(complete_submissions), BATCH_SIZE)
     else:
         batched_submissions = []
         print("No COMPLETE submissions to generate export")
+        logging.warning("No COMPLETE submissions to generate export")
 
     for batch_num, batch_start in enumerate(batched_submissions):
         batch_end = batch_start + BATCH_SIZE
@@ -340,12 +363,16 @@ if __name__ == "__main__":
         # FULL WORK FLOW
         full_dfs = []
         print(f"Starting Batch {batch_num+1}")
+        logging.warning(f"Starting Batch {batch_num+1}")
         for submission in tqdm(submission_batch):
+            logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds")
+            logging.warning(f"Extracting data for {submission.input_filename} : {submission.id}")
             try:
                 page_infos, predictions, reviewer_id = get_page_extractions(
                     indico_wrapper, submission, MODEL_NAME, post_review=post_review
                 )
                 complete_revID.append(reviewer_id)
+                complete_ids.append(submission.id)
                 complete_filenames.append(submission.input_filename)
                 if predictions:
                     # apply post processing functions
@@ -359,9 +386,11 @@ if __name__ == "__main__":
 
                     # first check for manually added preds, add them to exception queue
                     if contains_added_text(predictions, ROW_FIELDS + PAGE_KEY_FIELDS):
+                        logging.warning(f"for {submission.input_filename}:{submission.id}, Add Value feature was used for row field")
                         exception_ids.append(int(submission.id))
                         exception_filenames.append(str(submission.input_filename))
                         exceptions_revID.append(str(reviewer_id))
+                        logging.warning(f"Marking {submission.input_filename}:{submission.id} as retrieved")
                         if not DEBUG:
                             indico_wrapper.mark_retreived(submission)
                         continue
@@ -460,7 +489,7 @@ if __name__ == "__main__":
             output_df = output_df[col_order]
 
             reviewer_filename_df = pd.DataFrame(
-                {"filename": complete_filenames, "Reviewer ID": complete_revID}
+                {"Submission ID":complete_ids,"filename": complete_filenames, "Reviewer ID": complete_revID}
             )
 
             output_df = pd.merge(
@@ -473,18 +502,25 @@ if __name__ == "__main__":
             total_processed = min(batch_end, total_submissions)
             print(f"Processed {total_processed}/ {total_submissions}")
             print("An export file has been generated")
+            logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds")
+            logging.warning("An export file has been generated")
 
             if not DEBUG:
                 for sub in submission_batch:
+                    logging.warning(f"Marking file {sub.input_filename} with Submission ID {sub.id} as retrieved")
                     indico_wrapper.mark_retreived(sub)
-        
+            logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds") 
+            logging.warning("All COMPLETE submissions have been marked retrieved")
     EXCEPTION_STATUS = "PENDING_ADMIN_REVIEW"
+    logging.warning("Getting the list of rejected submissions from Indico")
     exception_submissions = indico_wrapper.get_submissions(
         WORKFLOW_ID, EXCEPTION_STATUS, retrieved
     )
-
+    logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds")    
+    logging.warning("Rejected submissions list has been obtained")  
     # Creating a DataFrame to store Exception Submission IDs and their corresponding filenames
 
+    logging.warning("Beginning to create the exceptions file")
     for es in exception_submissions:
         exception_ids.append(int(es.id))
         exception_filenames.append(str(es.input_filename))
@@ -501,10 +537,14 @@ if __name__ == "__main__":
 
     if not DEBUG:
         for sub in exception_submissions:
+            logging.warning(f"Marking file {sub.input_filename} with Submission ID {sub.id} as retrieved")
             indico_wrapper.mark_retreived(sub)
-
+        logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds") 
+        logging.warning("All rejected submissions have been marked retrieved")
     # Exporting Exception files and their Submission IDs as a CSV
     exception_filepath = os.path.join(EXPORT_DIR, EXCEPTION_FILENAME)
     exceptions_df.to_csv(exception_filepath, index=False)
+    logging.warning(f"Time:{(datetime.datetime.now() - begin_time).seconds} seconds")
+    logging.warning("An exception file has been generated")
     print(f"Generated exceptions {exception_filepath}")
     print("An exception file has been generated")
