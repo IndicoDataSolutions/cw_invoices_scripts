@@ -520,7 +520,7 @@ if __name__ == "__main__":
     logging.warning("Rejected submissions list has been obtained")  
     # Creating a DataFrame to store Exception Submission IDs and their corresponding filenames
 
-    logging.warning("Beginning to create the exceptions file")
+    logging.warning(f"Beginning to create the exceptions file with {len(exception_submissions)}")
     for es in exception_submissions:
         exception_ids.append(int(es.id))
         exception_filenames.append(str(es.input_filename))
